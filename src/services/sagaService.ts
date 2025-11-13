@@ -1,0 +1,285 @@
+import type { SagaEventSubmission, SagaFlow } from "../common/types/sagaEvent";
+
+const mockSagaFlow: any = {
+  name: "Retailer Happy Path Saga",
+  version: 1,
+  domains: [
+    {
+      id: "order",
+      queue: "orders",
+      events: [
+        {
+          name: "OrderPlaced",
+          payloadSchema: {
+            orderId: "string",
+            lines: [
+              {
+                sku: "string",
+                qty: "number",
+              },
+            ],
+            amount: "number",
+            address: {
+              line1: "string",
+              city: "string",
+              zip: "string",
+              country: "string",
+            },
+          },
+        },
+        {
+          name: "PaymentCaptured",
+          payloadSchema: {
+            paymentId: "string",
+            orderId: "string",
+            amount: "number",
+          },
+        },
+        {
+          name: "OrderConfirmed",
+          payloadSchema: {
+            orderId: "string",
+            status: "string",
+          },
+        },
+      ],
+      listeners: [
+        {
+          id: "order-on-OrderPlaced",
+          delayMs: 20,
+          on: { event: "OrderPlaced" },
+          actions: [
+            {
+              type: "set-state",
+              status: "PLACED",
+            },
+            {
+              type: "emit",
+              event: "InventoryReserved",
+              toDomain: "inventory",
+              mapping: {
+                reservationId: { const: "RES-001" },
+                orderId: "orderId",
+                items: {
+                  arrayFrom: "lines",
+                  map: {
+                    sku: "sku",
+                    qty: "qty",
+                  },
+                },
+                amount: "amount",
+                address: {
+                  map: {
+                    line1: { from: "line1" },
+                    city: { from: "city" },
+                    zip: { from: "zip" },
+                    country: { from: "country" },
+                  },
+                  objectFrom: "address",
+                },
+              },
+            },
+          ],
+        },
+        {
+          id: "order-on-PaymentCaptured",
+          delayMs: 25,
+          on: { event: "PaymentCaptured" },
+          actions: [
+            {
+              type: "set-state",
+              status: "CONFIRMED",
+            },
+            {
+              type: "emit",
+              event: "OrderConfirmed",
+              toDomain: "order",
+              mapping: {
+                orderId: "orderId",
+                status: { const: "CONFIRMED" },
+              },
+            },
+          ],
+        },
+      ],
+    },
+    {
+      id: "inventory",
+      queue: "inventory",
+      events: [
+        {
+          name: "InventoryReserved",
+          payloadSchema: {
+            reservationId: "string",
+            orderId: "string",
+            items: [
+              {
+                sku: "string",
+                qty: "number",
+              },
+            ],
+            amount: "number",
+            address: {
+              line1: "string",
+              city: "string",
+              zip: "string",
+              country: "string",
+            },
+          },
+        },
+      ],
+      listeners: [
+        {
+          id: "inventory-on-InventoryReserved",
+          delayMs: 30,
+          on: { event: "InventoryReserved" },
+          actions: [
+            {
+              type: "set-state",
+              status: "RESERVED",
+            },
+            {
+              type: "emit",
+              event: "PaymentAuthorized",
+              toDomain: "payments",
+              mapping: {
+                paymentId: { const: "PAY-001" },
+                orderId: "orderId",
+                reservationId: "reservationId",
+                amount: "amount",
+                address: {
+                  objectFrom: "address",
+                  map: {
+                    line1: "line1",
+                    city: "city",
+                    zip: "zip",
+                    country: "country",
+                  },
+                },
+              },
+            },
+          ],
+        },
+      ],
+    },
+    {
+      id: "payments",
+      queue: "payments",
+      events: [
+        {
+          name: "PaymentAuthorized",
+          payloadSchema: {
+            paymentId: "string",
+            orderId: "string",
+            reservationId: "string",
+            amount: "number",
+            address: {
+              line1: "string",
+              city: "string",
+              zip: "string",
+              country: "string",
+            },
+          },
+        },
+      ],
+      listeners: [
+        {
+          id: "payments-on-PaymentAuthorized",
+          delayMs: 40,
+          on: { event: "PaymentAuthorized" },
+          actions: [
+            {
+              type: "set-state",
+              status: "AUTHORIZED",
+            },
+            {
+              type: "emit",
+              event: "ShipmentPrepared",
+              toDomain: "shipping",
+              mapping: {
+                shipmentId: { const: "SHIP-001" },
+                orderId: "orderId",
+                paymentId: "paymentId",
+                amount: "amount",
+                address: {
+                  objectFrom: "address",
+                  map: {
+                    line1: "line1",
+                    city: "city",
+                    zip: "zip",
+                    country: "country",
+                  },
+                },
+              },
+            },
+          ],
+        },
+      ],
+    },
+    {
+      id: "shipping",
+      queue: "shipping",
+      events: [
+        {
+          name: "ShipmentPrepared",
+          payloadSchema: {
+            shipmentId: "string",
+            orderId: "string",
+            paymentId: "string",
+            amount: "number",
+            address: {
+              line1: "string",
+              city: "string",
+              zip: "string",
+              country: "string",
+            },
+          },
+        },
+      ],
+      listeners: [
+        {
+          id: "shipping-on-ShipmentPrepared",
+          delayMs: 50,
+          on: { event: "ShipmentPrepared" },
+          actions: [
+            {
+              type: "set-state",
+              status: "PREPARED",
+            },
+            {
+              type: "emit",
+              event: "PaymentCaptured",
+              toDomain: "order",
+              mapping: {
+                paymentId: "paymentId",
+                orderId: "orderId",
+                amount: "amount",
+              },
+            },
+          ],
+        },
+      ],
+    },
+  ],
+};
+
+const mockDelay = (ms = 450) =>
+  new Promise((resolve) => {
+    setTimeout(resolve, ms);
+  });
+
+export async function fetchSagaFlow(): Promise<SagaFlow> {
+  await mockDelay();
+  return mockSagaFlow;
+}
+
+export async function submitSagaEvent(submission: SagaEventSubmission): Promise<void> {
+  await mockDelay(600);
+  const shouldFail = submission.eventName === "OrderConfirmed";
+
+  if (shouldFail) {
+    throw new Error("Mocked failure while sending saga event");
+  }
+
+  console.info("Saga event dispatched", submission);
+}

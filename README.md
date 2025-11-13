@@ -547,6 +547,10 @@ El código dentro de un archivo .tsx debe seguir este orden estricto mediante co
 
 ---
 
+### Responsive
+
+Todos los componentes y vistas deben ser responsivos y se deben visualizar correctamente en todos los dispositivos
+
 ## ✅ Best Practices Summary
 
 - 🧩 Each component: `view.tsx` (UI) + `use{Component}.ts` (logic with **React Query**) + `styled.ts` (styles).

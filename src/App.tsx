@@ -1,7 +1,7 @@
-import HomePage from "./pages/Home/view";
+import SagaEventPage from "./pages/SagaEvent/view";
 
 function App() {
-  return <HomePage />;
+  return <SagaEventPage />;
 }
 
 export default App;
