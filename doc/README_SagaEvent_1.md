@@ -76,6 +76,7 @@ El comportamiento debe ser claro, accesible y ofrecer una experiencia de usuario
    - El evento **activo** (indicado en el campo `event` del JSON) debe destacarse visualmente.
 
 2. **Formulario del evento activo**
+   - Los campos se validan al hacer click en el botón de submit. A partir de hacer la primera validación de los campos del formularios los campos se validarán en tiempo real.
    - Bajo la tarjeta del evento activo se muestra un **formulario dinámico** generado automáticamente a partir de la definición del campo `payloadSchema`.
    - Cada campo del formulario se genera según el tipo de dato definido:
      - `string` → campo de texto.
@@ -90,12 +91,13 @@ El comportamiento debe ser claro, accesible y ofrecer una experiencia de usuario
    - El resultado del envío se simula con un log o mensaje de confirmación.
    - Mientras el envío esté en curso:
      - Todos los campos y el botón de envío se bloquean.
+     - Al botón "Enviar" se le añade después del texto pero dentro del botón un spinner animado
    - Si el envío termina correctamente:
      - Se mantiene todo bloqueado.
-     - Se muestra un **banner de éxito** con un mensaje claro.
+     - Se sustituye el formulario por un **banner de éxito** con un mensaje claro. Este mensaje se mostrará con un icono de éxito, centrado y con letras grandes.
    - Si el envío falla:
      - No se bloquea la interfaz.
-     - Se muestra un **banner de error** con el mensaje correspondiente.
+     - Se muestra un **banner de error modal** con el mensaje correspondiente.
 
 ---
 

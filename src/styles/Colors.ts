@@ -1,14 +1,16 @@
 const Colors = {
-  primary: "#2563eb",
-  primaryDark: "#1d4ed8",
-  secondary: "#0f172a",
-  accent: "#f472b6",
-  success: "#16a34a",
-  warning: "#f97316",
-  danger: "#dc2626",
-  gray100: "#f8fafc",
-  gray300: "#cbd5f5",
-  gray500: "#64748b",
-};
+  primary: "var(--color-primary)",
+  primaryDark: "var(--color-primary-dark)",
+  secondary: "var(--color-secondary)",
+  accent: "var(--color-accent)",
+  success: "var(--color-success)",
+  warning: "var(--color-warning)",
+  danger: "var(--color-danger)",
+  gray100: "var(--color-gray-100)",
+  gray300: "var(--color-gray-300)",
+  gray500: "var(--color-gray-500)",
+  backgroundStart: "var(--color-background-start)",
+  backgroundEnd: "var(--color-background-end)",
+} as const;
 
 export default Colors;

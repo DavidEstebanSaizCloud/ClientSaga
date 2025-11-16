@@ -1,10 +1,22 @@
 @import "./styles/tailwind.css";
 
 :root {
+  --color-primary: #2563eb;
+  --color-primary-dark: #1d4ed8;
+  --color-secondary: #0f172a;
+  --color-accent: #f472b6;
+  --color-success: #16a34a;
+  --color-warning: #f97316;
+  --color-danger: #dc2626;
+  --color-gray-100: #f8fafc;
+  --color-gray-300: #cbd5f5;
+  --color-gray-500: #64748b;
+  --color-background-start: #f8fafc;
+  --color-background-end: #e2e8f0;
   font-family: "Inter", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
     sans-serif;
-  color: #0f172a;
-  background-color: #f8fafc;
+  color: var(--color-secondary);
+  background-color: var(--color-gray-100);
 }
 
 * {
@@ -14,7 +26,11 @@
 body {
   margin: 0;
   min-height: 100vh;
-  background: linear-gradient(180deg, #f8fafc 0%, #e2e8f0 100%);
+  background: linear-gradient(
+    180deg,
+    var(--color-background-start) 0%,
+    var(--color-background-end) 100%
+  );
 }
 
 #root {
