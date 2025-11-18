@@ -6,6 +6,8 @@ import type {
   SagaDomain,
   SagaEventDefinition,
   SagaFormValues,
+  SagaListenerAction,
+  SagaListenerEmitAction,
   SagaListenerMapping,
 } from "../../common/types/sagaEvent";
 import {
@@ -28,9 +30,7 @@ const IDLE_SNAPSHOT: SubmissionSnapshot = {
   errorMessage: "",
 };
 
-type SagaEventSubmitHandler = ReturnType<
-  UseFormReturn<SagaFormValues>["handleSubmit"]
->;
+type SagaEventSubmitHandler = ReturnType<UseFormReturn<SagaFormValues>["handleSubmit"]>;
 
 interface UseSagaEventResult {
   sagaName: string;
@@ -49,9 +49,7 @@ interface UseSagaEventResult {
 export function useSagaEvent(): UseSagaEventResult {
   const domainIdEnv = import.meta.env.VITE_DOMAIN;
   const domainId =
-    typeof domainIdEnv === "string" && domainIdEnv.length > 0
-      ? domainIdEnv
-      : "order";
+    typeof domainIdEnv === "string" && domainIdEnv.length > 0 ? domainIdEnv : "order";
   const [submissionState, setSubmissionState] = useState<
     Record<string, SubmissionSnapshot>
   >({});
@@ -92,11 +90,7 @@ export function useSagaEvent(): UseSagaEventResult {
     if (!activeEvent || !sagaQuery.data) {
       return undefined;
     }
-    return findEventMapping(
-      sagaQuery.data.domains,
-      domain?.id ?? null,
-      activeEvent.name,
-    );
+    return findEventMapping(sagaQuery.data.domains, domain?.id ?? null, activeEvent.name);
   }, [activeEvent, domain?.id, sagaQuery.data]);
 
   useEffect(() => {
@@ -155,8 +149,7 @@ export function useSagaEvent(): UseSagaEventResult {
         ...prev,
         [activeEvent.name]: {
           status: "error",
-          errorMessage:
-            error instanceof Error ? error.message : "Error desconocido",
+          errorMessage: error instanceof Error ? error.message : "Error desconocido",
         },
       }));
     }
@@ -173,7 +166,7 @@ export function useSagaEvent(): UseSagaEventResult {
   }, [activeEvent?.name, domain]);
 
   const activeSnapshot = activeEvent
-    ? submissionState[activeEvent.name] ?? IDLE_SNAPSHOT
+    ? (submissionState[activeEvent.name] ?? IDLE_SNAPSHOT)
     : IDLE_SNAPSHOT;
   const status = activeSnapshot.status;
   const errorMessage = activeSnapshot.errorMessage;
@@ -219,8 +212,7 @@ function findMappingByTargetDomain(
         if (action.type !== "emit") {
           continue;
         }
-        const isMatchingDomain =
-          domainId === null || action.toDomain === domainId;
+        const isMatchingDomain = domainId === null || action.toDomain === domainId;
         if (isMatchingDomain && action.event === eventName) {
           return action.mapping;
         }
@@ -242,14 +234,14 @@ function findMappingInsideDomain(
   if (!domain || !domain.listeners) {
     return undefined;
   }
-  const listener = domain.listeners.find(
-    (entry) => entry.on.event === eventName,
-  );
+  const listener = domain.listeners.find((entry) => entry.on.event === eventName);
   if (!listener) {
     return undefined;
   }
-  const emitAction = listener.actions.find(
-    (action) => action.type === "emit" && action.mapping,
-  );
+  const emitAction = listener.actions.find(isEmitAction);
   return emitAction?.mapping;
+}
+
+function isEmitAction(action: SagaListenerAction): action is SagaListenerEmitAction {
+  return action.type === "emit";
 }

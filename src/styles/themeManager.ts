@@ -26,13 +26,13 @@ export function applyTheme(theme: ThemeDefinition) {
     root.style.setProperty(COLOR_VARIABLES[key], theme.colors[key]);
   });
 
-  root.dataset.theme = theme.name;
+  root.dataset["theme"] = theme.name;
   return theme;
 }
 
 export function pickRandomTheme(): ThemeDefinition {
   const index = Math.floor(Math.random() * THEME_PALETTES.length);
-  return THEME_PALETTES[index];
+  return THEME_PALETTES[index]!;
 }
 
 export function initializeRandomTheme() {
