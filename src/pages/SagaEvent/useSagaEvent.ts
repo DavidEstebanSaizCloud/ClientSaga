@@ -1,14 +1,15 @@
 import { useEffect, useMemo, useState } from "react";
-import { useForm, type Path } from "react-hook-form";
+import { useForm, type UseFormReturn } from "react-hook-form";
 import { useQuery } from "@tanstack/react-query";
 import { QUERY_KEYS } from "../../common/constants/queryKeys";
 import type {
   SagaDomain,
   SagaEventDefinition,
   SagaFormValues,
+  SagaListenerMapping,
 } from "../../common/types/sagaEvent";
 import {
-  buildDefaultValuesFromObject,
+  buildDefaultValuesFromMapping,
   castValuesToSchema,
   getFirstPrimitivePath,
 } from "../../common/utils/sagaSchema";
@@ -17,14 +18,48 @@ import type { SagaTimelineEvent } from "../../components/SagaTimeline/useSagaTim
 
 type SubmissionStatus = "idle" | "success" | "error";
 
-export function useSagaEvent() {
-  const domainId = import.meta.env["VITE_DOMAIN"] ?? "order";
-  const [status, setStatus] = useState<SubmissionStatus>("idle");
-  const [errorMessage, setErrorMessage] = useState("");
+interface SubmissionSnapshot {
+  status: SubmissionStatus;
+  errorMessage: string;
+}
+
+const IDLE_SNAPSHOT: SubmissionSnapshot = {
+  status: "idle",
+  errorMessage: "",
+};
+
+type SagaEventSubmitHandler = ReturnType<
+  UseFormReturn<SagaFormValues>["handleSubmit"]
+>;
+
+interface UseSagaEventResult {
+  sagaName: string;
+  domain?: SagaDomain;
+  activeEvent?: SagaEventDefinition;
+  eventsList: SagaTimelineEvent[];
+  handleSubmit: SagaEventSubmitHandler;
+  form: UseFormReturn<SagaFormValues>;
+  status: SubmissionStatus;
+  errorMessage: string;
+  isLocked: boolean;
+  isLoading: boolean;
+  loadError: unknown;
+}
+
+export function useSagaEvent(): UseSagaEventResult {
+  const domainIdEnv = import.meta.env.VITE_DOMAIN;
+  const domainId =
+    typeof domainIdEnv === "string" && domainIdEnv.length > 0
+      ? domainIdEnv
+      : "order";
+  const [submissionState, setSubmissionState] = useState<
+    Record<string, SubmissionSnapshot>
+  >({});
 
   const form = useForm<SagaFormValues>({
     defaultValues: {},
-    mode: "onTouched",
+    mode: "onSubmit",
+    reValidateMode: "onChange",
   });
 
   const sagaQuery = useQuery({
@@ -53,16 +88,28 @@ export function useSagaEvent() {
     );
   }, [domain, sagaQuery.data?.event]);
 
+  const activeEventMapping = useMemo(() => {
+    if (!activeEvent || !sagaQuery.data) {
+      return undefined;
+    }
+    return findEventMapping(
+      sagaQuery.data.domains,
+      domain?.id ?? null,
+      activeEvent.name,
+    );
+  }, [activeEvent, domain?.id, sagaQuery.data]);
+
   useEffect(() => {
     if (!activeEvent) {
       form.reset({});
       return;
     }
-    const defaults = buildDefaultValuesFromObject(activeEvent.payloadSchema);
+    const defaults = buildDefaultValuesFromMapping(
+      activeEvent.payloadSchema,
+      activeEventMapping,
+    );
     form.reset(defaults);
-    setStatus("idle");
-    setErrorMessage("");
-  }, [activeEvent, form]);
+  }, [activeEvent, activeEventMapping, form]);
 
   useEffect(() => {
     if (!activeEvent) {
@@ -73,7 +120,7 @@ export function useSagaEvent() {
       return;
     }
     requestAnimationFrame(() => {
-      form.setFocus(firstPath as Path<SagaFormValues>);
+      form.setFocus(firstPath);
     });
   }, [activeEvent, form]);
 
@@ -82,8 +129,10 @@ export function useSagaEvent() {
       return;
     }
     try {
-      setStatus("idle");
-      setErrorMessage("");
+      setSubmissionState((prev) => ({
+        ...prev,
+        [activeEvent.name]: { ...IDLE_SNAPSHOT },
+      }));
       const payload = castValuesToSchema(activeEvent.payloadSchema, values) as Record<
         string,
         unknown
@@ -94,10 +143,22 @@ export function useSagaEvent() {
         eventName: activeEvent.name,
         payload,
       });
-      setStatus("success");
+      setSubmissionState((prev) => ({
+        ...prev,
+        [activeEvent.name]: {
+          status: "success",
+          errorMessage: "",
+        },
+      }));
     } catch (error) {
-      setStatus("error");
-      setErrorMessage(error instanceof Error ? error.message : "Error desconocido");
+      setSubmissionState((prev) => ({
+        ...prev,
+        [activeEvent.name]: {
+          status: "error",
+          errorMessage:
+            error instanceof Error ? error.message : "Error desconocido",
+        },
+      }));
     }
   });
 
@@ -111,6 +172,11 @@ export function useSagaEvent() {
     }));
   }, [activeEvent?.name, domain]);
 
+  const activeSnapshot = activeEvent
+    ? submissionState[activeEvent.name] ?? IDLE_SNAPSHOT
+    : IDLE_SNAPSHOT;
+  const status = activeSnapshot.status;
+  const errorMessage = activeSnapshot.errorMessage;
   const isLocked = form.formState.isSubmitting || status === "success";
 
   return {
@@ -126,4 +192,64 @@ export function useSagaEvent() {
     isLoading: sagaQuery.isLoading,
     loadError: sagaQuery.error,
   };
+}
+
+function findEventMapping(
+  domains: SagaDomain[],
+  domainId: string | null,
+  eventName: string,
+): SagaListenerMapping | undefined {
+  return (
+    findMappingByTargetDomain(domains, domainId, eventName) ??
+    findMappingInsideDomain(domains, domainId, eventName)
+  );
+}
+
+function findMappingByTargetDomain(
+  domains: SagaDomain[],
+  domainId: string | null,
+  eventName: string,
+): SagaListenerMapping | undefined {
+  for (const sagaDomain of domains) {
+    if (!sagaDomain.listeners) {
+      continue;
+    }
+    for (const listener of sagaDomain.listeners) {
+      for (const action of listener.actions) {
+        if (action.type !== "emit") {
+          continue;
+        }
+        const isMatchingDomain =
+          domainId === null || action.toDomain === domainId;
+        if (isMatchingDomain && action.event === eventName) {
+          return action.mapping;
+        }
+      }
+    }
+  }
+  return undefined;
+}
+
+function findMappingInsideDomain(
+  domains: SagaDomain[],
+  domainId: string | null,
+  eventName: string,
+): SagaListenerMapping | undefined {
+  if (!domainId) {
+    return undefined;
+  }
+  const domain = domains.find((item) => item.id === domainId);
+  if (!domain || !domain.listeners) {
+    return undefined;
+  }
+  const listener = domain.listeners.find(
+    (entry) => entry.on.event === eventName,
+  );
+  if (!listener) {
+    return undefined;
+  }
+  const emitAction = listener.actions.find(
+    (action) => action.type === "emit" && action.mapping,
+  );
+  return emitAction?.mapping;
 }

@@ -34,7 +34,6 @@ export const List = styled.ol`
   padding: 0;
   margin: 0;
   display: grid;
-  gap: 1rem;
 `;
 
 export const EventItem = styled.li`

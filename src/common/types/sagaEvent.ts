@@ -5,9 +5,13 @@ export type SagaSchema =
   | SagaSchemaObject
   | SagaSchemaArray;
 
-export type SagaSchemaObject = Record<string, SagaSchema>;
+export interface SagaSchemaObject {
+  [key: string]: SagaSchemaPrimitive | SagaSchemaObject | SagaSchemaArray;
+}
 
-export type SagaSchemaArray = SagaSchema[];
+export type SagaSchemaArray =
+  | SagaSchemaPrimitive[]
+  | SagaSchemaObject[];
 
 export interface SagaEventDefinition {
   name: string;
@@ -18,6 +22,7 @@ export interface SagaDomain {
   id: string;
   queue: string;
   events: SagaEventDefinition[];
+  listeners?: SagaListener[];
 }
 
 export interface SagaFlow {
@@ -34,3 +39,52 @@ export interface SagaEventSubmission {
 }
 
 export type SagaFormValues = Record<string, unknown>;
+
+export interface SagaListener {
+  id: string;
+  delayMs: number;
+  on: {
+    event: string;
+  };
+  actions: SagaListenerAction[];
+}
+
+export type SagaListenerAction =
+  | SagaListenerSetStateAction
+  | SagaListenerEmitAction;
+
+export interface SagaListenerSetStateAction {
+  type: "set-state";
+  status: string;
+}
+
+export interface SagaListenerEmitAction {
+  type: "emit";
+  event: string;
+  toDomain: string;
+  mapping: SagaListenerMapping;
+}
+
+export type SagaListenerMapping = Record<string, SagaListenerMappingValue>;
+
+export type SagaListenerMappingValue =
+  | string
+  | number
+  | boolean
+  | SagaMappingConst
+  | SagaMappingReference
+  | SagaMappingContainer;
+
+export interface SagaMappingConst {
+  const: string | number | boolean;
+}
+
+export interface SagaMappingReference {
+  from: string;
+}
+
+export interface SagaMappingContainer {
+  map: SagaListenerMapping;
+  objectFrom?: string;
+  arrayFrom?: string;
+}

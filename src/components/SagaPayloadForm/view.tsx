@@ -1,5 +1,5 @@
 import { Fragment } from "react";
-import type { FieldArrayPath, Path } from "react-hook-form";
+import type { FieldArrayPath, Path, RegisterOptions } from "react-hook-form";
 import { useFieldArray, useFormContext } from "react-hook-form";
 import type {
   SagaSchema,
@@ -20,9 +20,19 @@ import {
 } from "./useSagaPayloadForm";
 
 export default function SagaPayloadForm(props: SagaPayloadFormProps) {
-  const { banner, schema, onSubmit, eventName, isLocked } =
+  const { banner, schema, onSubmit, eventName, isLocked, successState } =
     useSagaPayloadForm(props);
   const { formState } = useFormContext<SagaFormValues>();
+
+  if (successState) {
+    return (
+      <S.SuccessState role="status" aria-live="polite">
+        <S.SuccessIcon aria-hidden="true">✓</S.SuccessIcon>
+        <S.SuccessTitle>{successState.title}</S.SuccessTitle>
+        <S.SuccessMessage>{successState.description}</S.SuccessMessage>
+      </S.SuccessState>
+    );
+  }
 
   return (
     <Fragment>
@@ -34,17 +44,21 @@ export default function SagaPayloadForm(props: SagaPayloadFormProps) {
         <S.Actions>
           <S.SubmitButton
             type="submit"
-            disabled={isLocked || formState.isSubmitting}
+            disabled={isLocked}
+            data-loading={formState.isSubmitting}
           >
-            Enviar
+            <span>Enviar</span>
+            {formState.isSubmitting && <S.Spinner aria-hidden="true" />}
           </S.SubmitButton>
         </S.Actions>
       </S.Form>
       {banner && (
-        <S.Banner intent={banner.intent} role="status">
-          <strong>{banner.message}</strong>
-          {banner.detail && <span>{banner.detail}</span>}
-        </S.Banner>
+        <S.ErrorModal role="alert" aria-live="assertive">
+          <S.Banner intent={banner.intent}>
+            <strong>{banner.message}</strong>
+            {banner.detail && <span>{banner.detail}</span>}
+          </S.Banner>
+        </S.ErrorModal>
       )}
     </Fragment>
   );
@@ -130,20 +144,39 @@ function PrimitiveField({
   type,
   disabled,
 }: PrimitiveFieldProps) {
-  const { register } = useFormContext<SagaFormValues>();
+  const { register, getFieldState, formState } =
+    useFormContext<SagaFormValues>();
   const inputId = name.replace(/[^a-zA-Z0-9]/g, "-");
-  const path = name as Path<SagaFormValues>;
+  const fieldState = getFieldState(name, formState);
+  const errorMessage = fieldState.error?.message;
+  const isInvalid = Boolean(errorMessage);
+
+  const registerOptions: RegisterOptions<SagaFormValues, Path<SagaFormValues>> =
+    type === "number"
+      ? {
+          valueAsNumber: true,
+          required: "Campo obligatorio",
+          validate: (value: number) =>
+            typeof value === "number" && !Number.isNaN(value)
+              ? true
+              : "Introduce un número válido",
+        }
+      : {
+          required: "Campo obligatorio",
+        };
 
   return (
-    <S.InputGroup>
+    <S.InputGroup data-invalid={isInvalid || undefined}>
       <S.Label htmlFor={inputId}>{label}</S.Label>
       <S.Input
         id={inputId}
         type={type === "number" ? "number" : "text"}
         inputMode={type === "number" ? "decimal" : undefined}
         disabled={disabled}
-        {...register(path, type === "number" ? { valueAsNumber: true } : {})}
+        data-invalid={isInvalid || undefined}
+        {...register(name, registerOptions)}
       />
+      {errorMessage && <S.ErrorText>{errorMessage}</S.ErrorText>}
     </S.InputGroup>
   );
 }
@@ -164,10 +197,16 @@ function ArrayField({ name, label, schema, disabled }: ArrayFieldProps) {
   });
 
   const handleAdd = () => {
+    if (disabled) {
+      return;
+    }
     fieldArray.append(buildDefaultValue(template));
   };
 
   const handleRemove = (index: number) => {
+    if (disabled) {
+      return;
+    }
     fieldArray.remove(index);
   };
 

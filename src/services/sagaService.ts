@@ -1,8 +1,9 @@
 import type { SagaEventSubmission, SagaFlow } from "../common/types/sagaEvent";
 
-const mockSagaFlow: any = {
+const mockSagaFlow: SagaFlow = {
   name: "Retailer Happy Path Saga",
   version: 1,
+  event: "OrderPlaced",
   domains: [
     {
       id: "order",
@@ -67,7 +68,7 @@ const mockSagaFlow: any = {
                     qty: "qty",
                   },
                 },
-                amount: "amount",
+                amount: 1,
                 address: {
                   map: {
                     line1: { from: "line1" },
@@ -146,7 +147,7 @@ const mockSagaFlow: any = {
                 paymentId: { const: "PAY-001" },
                 orderId: "orderId",
                 reservationId: "reservationId",
-                amount: "amount",
+                amount: 1,
                 address: {
                   objectFrom: "address",
                   map: {
@@ -200,7 +201,7 @@ const mockSagaFlow: any = {
                 shipmentId: { const: "SHIP-001" },
                 orderId: "orderId",
                 paymentId: "paymentId",
-                amount: "amount",
+                amount: 1,
                 address: {
                   objectFrom: "address",
                   map: {
@@ -253,7 +254,7 @@ const mockSagaFlow: any = {
               mapping: {
                 paymentId: "paymentId",
                 orderId: "orderId",
-                amount: "amount",
+                amount: 1,
               },
             },
           ],
