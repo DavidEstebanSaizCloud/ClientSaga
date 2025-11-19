@@ -39,6 +39,7 @@ export interface LayoutPalette {
 export interface ThemeDefinition {
   name: string;
   companyName: string;
+  fontFamily: string;
   logo: {
     src: string;
     alt: string;
@@ -51,6 +52,7 @@ export const THEME_PALETTES: ThemeDefinition[] = [
   {
     name: "ClearVision",
     companyName: "ClearVision Analytics",
+    fontFamily: "\"Inter\", system-ui, -apple-system, BlinkMacSystemFont, \"Segoe UI\", sans-serif",
     logo: {
       src: clearvisionLogo,
       alt: "ClearVision logo",
@@ -84,6 +86,7 @@ export const THEME_PALETTES: ThemeDefinition[] = [
   {
     name: "DreamSleep",
     companyName: "DreamSleep Labs",
+    fontFamily: "\"Playfair Display\", \"Times New Roman\", serif",
     logo: {
       src: dreamSleepLogo,
       alt: "DreamSleep logo",
@@ -117,6 +120,7 @@ export const THEME_PALETTES: ThemeDefinition[] = [
   {
     name: "EcoMug",
     companyName: "EcoMug Studio",
+    fontFamily: "\"Nunito\", \"Segoe UI\", system-ui, sans-serif",
     logo: {
       src: ecoMugLogo,
       alt: "EcoMug logo",
@@ -150,6 +154,7 @@ export const THEME_PALETTES: ThemeDefinition[] = [
   {
     name: "Kitchenique",
     companyName: "Kitchenique Brands",
+    fontFamily: "\"Poppins\", \"Segoe UI\", system-ui, sans-serif",
     logo: {
       src: kitcheniqueLogo,
       alt: "Kitchenique logo",
@@ -183,6 +188,7 @@ export const THEME_PALETTES: ThemeDefinition[] = [
   {
     name: "Maplewood",
     companyName: "Maplewood Workshop",
+    fontFamily: "\"Merriweather\", \"Times New Roman\", serif",
     logo: {
       src: maplewoodLogo,
       alt: "Maplewood logo",
@@ -216,6 +222,7 @@ export const THEME_PALETTES: ThemeDefinition[] = [
   {
     name: "PetPals",
     companyName: "PetPals Network",
+    fontFamily: "\"Quicksand\", \"Segoe UI\", system-ui, sans-serif",
     logo: {
       src: petPalsLogo,
       alt: "PetPals logo",
@@ -249,6 +256,7 @@ export const THEME_PALETTES: ThemeDefinition[] = [
   {
     name: "PureAroma",
     companyName: "Pure Aroma Co.",
+    fontFamily: "\"Cormorant Garamond\", Georgia, serif",
     logo: {
       src: pureAromaLogo,
       alt: "Pure Aroma logo",
@@ -282,6 +290,7 @@ export const THEME_PALETTES: ThemeDefinition[] = [
   {
     name: "StrideStep",
     companyName: "StrideStep Apparel",
+    fontFamily: "\"Fira Sans\", \"Segoe UI\", system-ui, sans-serif",
     logo: {
       src: strideStepLogo,
       alt: "StrideStep logo",
@@ -315,6 +324,7 @@ export const THEME_PALETTES: ThemeDefinition[] = [
   {
     name: "SubmmitTents",
     companyName: "Submmit Tents Co.",
+    fontFamily: "\"Barlow\", \"Segoe UI\", system-ui, sans-serif",
     logo: {
       src: submmitTentsLogo,
       alt: "Submmit Tents logo",
@@ -348,6 +358,7 @@ export const THEME_PALETTES: ThemeDefinition[] = [
   {
     name: "SwiftCharge",
     companyName: "SwiftCharge Energy",
+    fontFamily: "\"Space Grotesk\", \"Segoe UI\", system-ui, sans-serif",
     logo: {
       src: swiftChargeLogo,
       alt: "SwiftCharge logo",

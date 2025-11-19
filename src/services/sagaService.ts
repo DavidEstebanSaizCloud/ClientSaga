@@ -1,103 +1,45 @@
 import type { SagaEventSubmission, SagaFlow } from "../common/types/sagaEvent";
 
 const mockSagaFlow: SagaFlow = {
-  name: "Retailer Happy Path Saga",
+  name: "cambio-de-titular-utility",
   version: 1,
-  event: "OrderPlaced",
+  event: "actualizacion-de-datos",
   domains: [
     {
-      id: "order",
-      queue: "orders",
+      id: "gestion-de-clientes",
+      queue: "cola-gestion-clientes",
       events: [
         {
-          name: "OrderPlaced",
+          name: "solicitud-de-cambio",
           payloadSchema: {
-            orderId: "string",
-            lines: [
-              {
-                sku: "string",
-                qty: "number",
-              },
-            ],
-            amount: "number",
-            address: {
-              line1: "string",
-              city: "string",
-              zip: "string",
-              country: "string",
-            },
+            clienteId: "string",
+            nombreNuevoTitular: "string",
+            documentoIdentidadNuevoTitular: "string",
           },
         },
         {
-          name: "PaymentCaptured",
+          name: "actualizacion-de-datos",
           payloadSchema: {
-            paymentId: "string",
-            orderId: "string",
-            amount: "number",
-          },
-        },
-        {
-          name: "OrderConfirmed",
-          payloadSchema: {
-            orderId: "string",
-            status: "string",
+            clienteId: "string",
+            nombreNuevoTitular: "string",
+            documentoIdentidadNuevoTitular: "string",
           },
         },
       ],
       listeners: [
         {
-          id: "order-on-OrderPlaced",
-          delayMs: 20,
-          on: { event: "OrderPlaced" },
+          id: "listener-verificacion-identidad",
+          on: {
+            event: "solicitud-de-cambio",
+          },
           actions: [
             {
-              type: "set-state",
-              status: "PLACED",
-            },
-            {
               type: "emit",
-              event: "InventoryReserved",
-              toDomain: "inventory",
+              event: "verificacion-de-identidad",
               mapping: {
-                reservationId: { const: "RES-001" },
-                orderId: "orderId",
-                items: {
-                  arrayFrom: "lines",
-                  map: {
-                    sku: "sku",
-                    qty: "qty",
-                  },
-                },
-                amount: 1,
-                address: {
-                  map: {
-                    line1: { from: "line1" },
-                    city: { from: "city" },
-                    zip: { from: "zip" },
-                    country: { from: "country" },
-                  },
-                  objectFrom: "address",
-                },
-              },
-            },
-          ],
-        },
-        {
-          id: "order-on-PaymentCaptured",
-          delayMs: 25,
-          on: { event: "PaymentCaptured" },
-          actions: [
-            {
-              type: "set-state",
-              status: "CONFIRMED",
-            },
-            {
-              type: "emit",
-              event: "OrderConfirmed",
-              toDomain: "order",
-              mapping: {
-                orderId: "orderId",
-                status: { const: "CONFIRMED" },
+                clienteId: "clienteId",
+                nombreNuevoTitular: "nombreNuevoTitular",
+                documentoIdentidadNuevoTitular: "documentoIdentidadNuevoTitular",
               },
             },
           ],
@@ -105,58 +47,39 @@ const mockSagaFlow: SagaFlow = {
       ],
     },
     {
-      id: "inventory",
-      queue: "inventory",
+      id: "servicio-al-cliente",
+      queue: "cola-servicio-cliente",
       events: [
         {
-          name: "InventoryReserved",
+          name: "verificacion-de-identidad",
           payloadSchema: {
-            reservationId: "string",
-            orderId: "string",
-            items: [
-              {
-                sku: "string",
-                qty: "number",
-              },
-            ],
-            amount: "number",
-            address: {
-              line1: "string",
-              city: "string",
-              zip: "string",
-              country: "string",
-            },
+            clienteId: "string",
+            nombreNuevoTitular: "string",
+            documentoIdentidadNuevoTitular: "string",
+          },
+        },
+        {
+          name: "confirmacion-al-nuevo-titular",
+          payloadSchema: {
+            clienteId: "string",
+            mensaje: "string",
           },
         },
       ],
       listeners: [
         {
-          id: "inventory-on-InventoryReserved",
-          delayMs: 30,
-          on: { event: "InventoryReserved" },
+          id: "listener-revision-contrato",
+          on: {
+            event: "verificacion-de-identidad",
+          },
           actions: [
             {
-              type: "set-state",
-              status: "RESERVED",
-            },
-            {
               type: "emit",
-              event: "PaymentAuthorized",
-              toDomain: "payments",
+              event: "revision-de-contrato",
               mapping: {
-                paymentId: { const: "PAY-001" },
-                orderId: "orderId",
-                reservationId: "reservationId",
-                amount: 1,
-                address: {
-                  objectFrom: "address",
-                  map: {
-                    line1: "line1",
-                    city: "city",
-                    zip: "zip",
-                    country: "country",
-                  },
-                },
+                clienteId: "clienteId",
+                nombreNuevoTitular: "nombreNuevoTitular",
+                documentoIdentidadNuevoTitular: "documentoIdentidadNuevoTitular",
               },
             },
           ],
@@ -164,53 +87,33 @@ const mockSagaFlow: SagaFlow = {
       ],
     },
     {
-      id: "payments",
-      queue: "payments",
+      id: "legal",
+      queue: "cola-legal",
       events: [
         {
-          name: "PaymentAuthorized",
+          name: "revision-de-contrato",
           payloadSchema: {
-            paymentId: "string",
-            orderId: "string",
-            reservationId: "string",
-            amount: "number",
-            address: {
-              line1: "string",
-              city: "string",
-              zip: "string",
-              country: "string",
-            },
+            clienteId: "string",
+            nombreNuevoTitular: "string",
+            documentoIdentidadNuevoTitular: "string",
           },
         },
       ],
       listeners: [
         {
-          id: "payments-on-PaymentAuthorized",
-          delayMs: 40,
-          on: { event: "PaymentAuthorized" },
+          id: "listener-actualizacion-datos",
+          on: {
+            event: "revision-de-contrato",
+          },
           actions: [
             {
-              type: "set-state",
-              status: "AUTHORIZED",
-            },
-            {
               type: "emit",
-              event: "ShipmentPrepared",
-              toDomain: "shipping",
+              event: "actualizacion-de-datos",
+              toDomain: "gestion-de-clientes",
               mapping: {
-                shipmentId: { const: "SHIP-001" },
-                orderId: "orderId",
-                paymentId: "paymentId",
-                amount: 1,
-                address: {
-                  objectFrom: "address",
-                  map: {
-                    line1: "line1",
-                    city: "city",
-                    zip: "zip",
-                    country: "country",
-                  },
-                },
+                clienteId: "clienteId",
+                nombreNuevoTitular: "nombreNuevoTitular",
+                documentoIdentidadNuevoTitular: "documentoIdentidadNuevoTitular",
               },
             },
           ],
@@ -218,43 +121,84 @@ const mockSagaFlow: SagaFlow = {
       ],
     },
     {
-      id: "shipping",
-      queue: "shipping",
+      id: "facturacion",
+      queue: "cola-facturacion",
       events: [
         {
-          name: "ShipmentPrepared",
+          name: "notificacion-a-facturacion",
           payloadSchema: {
-            shipmentId: "string",
-            orderId: "string",
-            paymentId: "string",
-            amount: "number",
-            address: {
-              line1: "string",
-              city: "string",
-              zip: "string",
-              country: "string",
-            },
+            clienteId: "string",
+            nombreNuevoTitular: "string",
+            documentoIdentidadNuevoTitular: "string",
           },
         },
       ],
       listeners: [
         {
-          id: "shipping-on-ShipmentPrepared",
-          delayMs: 50,
-          on: { event: "ShipmentPrepared" },
+          id: "listener-notificacion-facturacion",
+          on: {
+            event: "actualizacion-de-datos",
+          },
           actions: [
             {
-              type: "set-state",
-              status: "PREPARED",
+              type: "emit",
+              event: "notificacion-a-facturacion",
+              mapping: {
+                clienteId: "clienteId",
+                nombreNuevoTitular: "nombreNuevoTitular",
+                documentoIdentidadNuevoTitular: "documentoIdentidadNuevoTitular",
+              },
             },
+          ],
+        },
+      ],
+    },
+    {
+      id: "sistemas-de-informacion",
+      queue: "cola-sistemas-informacion",
+      events: [
+        {
+          name: "ajuste-en-sistemas",
+          payloadSchema: {
+            clienteId: "string",
+            nombreNuevoTitular: "string",
+            documentoIdentidadNuevoTitular: "string",
+          },
+        },
+      ],
+      listeners: [
+        {
+          id: "listener-ajuste-sistemas",
+          on: {
+            event: "notificacion-a-facturacion",
+          },
+          actions: [
             {
               type: "emit",
-              event: "PaymentCaptured",
-              toDomain: "order",
+              event: "ajuste-en-sistemas",
               mapping: {
-                paymentId: "paymentId",
-                orderId: "orderId",
-                amount: 1,
+                clienteId: "clienteId",
+                nombreNuevoTitular: "nombreNuevoTitular",
+                documentoIdentidadNuevoTitular: "documentoIdentidadNuevoTitular",
+              },
+            },
+          ],
+        },
+        {
+          id: "listener-confirmacion-titular",
+          on: {
+            event: "ajuste-en-sistemas",
+          },
+          actions: [
+            {
+              type: "emit",
+              event: "confirmacion-al-nuevo-titular",
+              toDomain: "servicio-al-cliente",
+              mapping: {
+                clienteId: "clienteId",
+                mensaje: {
+                  const: "El cambio de titularidad ha sido completado exitosamente.",
+                },
               },
             },
           ],

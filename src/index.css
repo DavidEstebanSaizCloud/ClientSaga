@@ -13,8 +13,9 @@
   --color-gray-500: #64748b;
   --color-background-start: #f8fafc;
   --color-background-end: #e2e8f0;
-  font-family: "Inter", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
+  --font-family-base: "Inter", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
     sans-serif;
+  font-family: var(--font-family-base);
   color: var(--color-secondary);
   background-color: var(--color-gray-100);
 }
