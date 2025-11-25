@@ -21,8 +21,8 @@ export function resolveDomainFromUrl(hostname: string, fallback?: string): strin
 
 export async function fetchSagaConfig(domainId: string): Promise<SagaFlow> {
   const candidates = [
-    `${PROTOCOL}://${domainId}.tia.deployreal.com:5173/config.json`,
-    `${PROTOCOL}://${domainId}.tia.deployreal.com:5173/config`,
+    `${PROTOCOL}://${domainId}.tia.deployreal.com/config.json`,
+    `${PROTOCOL}://${domainId}.tia.deployreal.com/config`,
   ];
 
   let lastError: unknown;
@@ -44,7 +44,7 @@ export async function fetchListenerEvent(
   domainId: string,
   listener: SagaListener,
 ): Promise<string | null> {
-  const url = `${PROTOCOL}://${listener.id}.${domainId}.tia.deployreal.com`;
+  const url = `${PROTOCOL}://${domainId}.tia.deployreal.com/${listener.id}`;
   try {
     const response = await axios.get<{ event?: string }>(url, {
       timeout: DEFAULT_TIMEOUT,

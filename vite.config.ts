@@ -6,6 +6,7 @@ export default defineConfig({
   server: {
     port: 5173,
     open: true,
+    /*
     host: true,
     allowedHosts: [
       "payroll.tia.deployreal.com",
@@ -13,6 +14,7 @@ export default defineConfig({
       // 'hr.tia.deployreal.com',
       // 'facilities.tia.deployreal.com'
     ],
+    */
   },
   build: {
     sourcemap: true,

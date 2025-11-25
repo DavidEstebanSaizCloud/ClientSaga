@@ -23,7 +23,7 @@ http://{dominio}.tia.deployreal.com
 - Una vez obtenido el dominio actual mediante la url y el JSON, se busca en el array "domains" el objeto que coincida "name" con nuestro dominio actual.
 - Con el objeto obtenido usamos el array de la propiedad "listeners" para hacer un GET por cada elemento del array, devolvemos su resultado en un array mediante una promesa de js.
   Los GETS se construirían de la siguiente manera:
-  GET {id del listener}.{dominio}.tia.deployreal.com
+  GET {dominio}.tia.deployreal.com/{id del listener}
   así pues, para el dominio :
 
   {
