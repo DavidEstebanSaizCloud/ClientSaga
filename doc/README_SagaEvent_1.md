@@ -11,60 +11,119 @@ El comportamiento debe ser claro, accesible y ofrecer una experiencia de usuario
 
 ## Flujo funcional
 
+Los datos para iniciar el flujo se encuentran en la url actual. Por ejemplo:
+http://{dominio}.tia.deployreal.com
+
 1. **Identificación del dominio actual**
-   - El sistema obtiene el identificador del dominio actual a partir de una variable global (`VITE_DOMAIN`).
-   - Ese dominio se utilizará para determinar qué parte del flujo se está mostrando.
+   - El sistema obtiene el identificador del dominio actual a partir del {dominio} indicado en la url.
 
 2. **Obtención de datos del flujo**
-   - Se realiza una llamada (mockeada en esta fase) al servicio `/sagaEvent`.
-   - Este servicio devuelve un **JSON** que describe toda la saga, sus dominios y los eventos disponibles en cada uno.
 
-   **Ejemplo simplificado del JSON:**
+- El JSON se obtendrá del contenido ofrecido por la url http://{dominio}.tia.deployreal.com/config.json
+- Una vez obtenido el dominio actual mediante la url y el JSON, se busca en el array "domains" el objeto que coincida "name" con nuestro dominio actual.
+- Con el objeto obtenido usamos el array de la propiedad "listeners" para hacer un GET por cada elemento del array, devolvemos su resultado en un array mediante una promesa de js.
+  Los GETS se construirían de la siguiente manera:
+  GET {id del listener}.{dominio}.tia.deployreal.com
+  así pues, para el dominio :
 
-   ```json
-   {
-     "name": "Retailer Happy Path Saga",
-     "version": 1,
-     "event": "OrderPlaced",
-     "domains": [
-       {
-         "id": "order",
-         "queue": "orders",
-         "events": [
-           {
-             "name": "OrderPlaced",
-             "payloadSchema": {
-               "orderId": "string",
-               "lines": [{ "sku": "string", "qty": "number" }],
-               "amount": "number",
-               "address": {
-                 "line1": "string",
-                 "city": "string",
-                 "zip": "string",
-                 "country": "string"
-               }
-             }
-           },
-           {
-             "name": "PaymentCaptured",
-             "payloadSchema": {
-               "paymentId": "string",
-               "orderId": "string",
-               "amount": "number"
-             }
-           },
-           {
-             "name": "OrderConfirmed",
-             "payloadSchema": {
-               "orderId": "string",
-               "status": "string"
-             }
-           }
-         ]
-       }
-     ]
-   }
-   ```
+  {
+  "id": "Payroll",
+  "queue": "payroll-queue",
+  "publishes": [
+  {
+  "event": "configuracion-pago-payroll",
+  "payloadSchema": {
+  "empleadoId": "string",
+  "nombre": "string",
+  "apellido": "string",
+  "email": "string"
+  }
+  }
+  ],
+  "listeners": [
+  {
+  "id": "payroll-on-registro-hr",
+  "on": {
+  "event": "registro-empleado-hr",
+  "fromDomain": "HR"
+  },
+  "actions": [
+  {
+  "type": "emit",
+  "event": "configuracion-pago-payroll",
+  "mapping": {
+  "empleadoId": "empleadoId",
+  "nombre": "nombre",
+  "apellido": "apellido",
+  "email": "email"
+  }
+  }
+  ]
+  }
+  ]
+  }
+  Se llamaría a un solo GET payroll-on-registro-hr.Payroll.tia.deployreal.com
+
+  en uno de los elementos del array resultado llegará un objeto con esta estructura
+  {event: "registro-empleado-hr"}
+
+- Si por lo menos una llamada da success, guardamos el evento que devuelve. Ese será nuestro evento actual. Si por el contrario ninguno devuelve un success con su campo "event", consideraremos nuestro evento el campo "event" del array "publishes" señalado con un "start": true en el "publishes" de nuestro dominio
+
+**Ejemplo simplificado del endpoint dominio:**
+
+```json
+{
+  "event": "OrderPlaced"
+}
+```
+
+**Ejemplo simplificado del JSON:**
+
+```json
+{
+  "name": "alta-empleado-choreography",
+  "version": 2,
+  "domains": [
+    {
+      "id": "Payroll" /*Nombre del dominio*/,
+      "queue": "payroll-queue" /*cola*/,
+      "publishes": [
+        {
+          "event": "configuracion-pago-payroll" /* Nombre del evento*/,
+          "payloadSchema": {
+            "empleadoId": "string",
+            "nombre": "string",
+            "apellido": "string",
+            "email": "string"
+          } /* Esquema del formulario */,
+          "start": true
+        }
+      ] /* Eventos */,
+      "listeners": [
+        {
+          "id": "payroll-on-registro-hr" /* identificador del listener*/,
+          "on": {
+            "event": "registro-empleado-hr" /* Evento a ejecutar en el POST del formulario*/,
+            "fromDomain": "HR" /*Dominio en el que se ejecuta el evento*/
+          } /*Datos del evento que dispara este listener*/,
+          "actions": [
+            {
+              "type": "emit" /* tipo de evento */,
+              "event": "configuracion-pago-payroll" /* Evento a ejecutar en el POST del formulario*/,
+              "mapping": {
+                "empleadoId": "empleadoId",
+                "nombre": "nombre",
+                "apellido": "apellido",
+                "email": "email"
+              } /* Valores por defecto del formulario. Se emparejan mediante la clave con los elementos de su payloadSchema correspondiente  */
+            }
+          ]
+        }
+      ] /*listeners asociados a los eventos*/
+    }
+  ]
+}
+```
 
 ---
 
@@ -73,7 +132,7 @@ El comportamiento debe ser claro, accesible y ofrecer una experiencia de usuario
 1. **Visualización general**
    - La vista muestra un **timeline o lista** con todos los eventos del dominio actual.
    - Cada evento aparece en una **tarjeta o caja** con su nombre visible.
-   - El evento **activo** (indicado en el campo `event` del JSON) debe destacarse visualmente.
+   - El evento **activo** debe destacarse visualmente.
 
 2. **Formulario del evento activo**
    - Los campos se validan al hacer click en el botón de submit. A partir de hacer la primera validación de los campos del formularios los campos se validarán en tiempo real.
@@ -89,13 +148,14 @@ El comportamiento debe ser claro, accesible y ofrecer una experiencia de usuario
 
 3. **Envío del formulario**
    - Al pulsar el botón **Enviar**, los datos introducidos deben enviarse en **exactamente la misma estructura** que el `payloadSchema` original.
-   - El resultado del envío se simula con un log o mensaje de confirmación.
+   - Se hará una llamada POST {queue}.{dominio}.tia.deployreal.com/{evento}.
    - Mientras el envío esté en curso:
      - Todos los campos y el botón de envío se bloquean.
      - Al botón "Enviar" se le añade después del texto pero dentro del botón un spinner animado
    - Si el envío termina correctamente:
      - Se mantiene todo bloqueado.
      - Se sustituye el formulario por un **banner de éxito** con un mensaje claro. Este mensaje se mostrará con un icono de éxito, centrado y con letras grandes.
+     - Se muestra también banner **banner spinner** que indica que se está volviendo a llamar a **endpoint dominio** para actualizar el evento actual y se vuelve a llamar cada 5s para volver a realizar el mismo proceso actualizado con el formulario del evento indicado por el nuevo resultado del endpoint.
    - Si el envío falla:
      - No se bloquea la interfaz.
      - Se muestra un **banner de error modal** con el mensaje correspondiente.
@@ -138,265 +198,146 @@ El comportamiento debe ser claro, accesible y ofrecer una experiencia de usuario
 
 ```JSON
 {
-  "name": "Retailer Happy Path Saga",
-  "version": 1,
+  "name": "alta-empleado-choreography",
+  "version": 2,
   "domains": [
-    {
-      "id": "order",
-      "queue": "orders",
-      "events": [
-        {
-          "name": "OrderPlaced",
-          "payloadSchema": {
-            "orderId": "string",
-            "lines": [
-              {
-                "sku": "string",
-                "qty": "number"
-              }
-            ],
-            "amount": "number",
-            "address": {
-              "line1": "string",
-              "city": "string",
-              "zip": "string",
-              "country": "string"
-            }
-          }
-        },
-        {
-          "name": "PaymentCaptured",
-          "payloadSchema": {
-            "paymentId": "string",
-            "orderId": "string",
-            "amount": 1
-          }
-        },
-        {
-          "name": "OrderConfirmed",
-          "payloadSchema": {
-            "orderId": "string",
-            "status": "string"
-          }
+   {
+    "id": "HR",
+    "queue": "hr-queue",
+    "publishes": [
+     {
+      "event": "registro-empleado-hr",
+      "payloadSchema": {
+       "empleadoId": "string",
+       "nombre": "string",
+       "apellido": "string",
+       "email": "string"
+      },
+       "start": true
+     }
+    ],
+    "listeners": []
+   },
+   {
+    "id": "Payroll",
+    "queue": "payroll-queue",
+    "publishes": [
+     {
+      "event": "configuracion-pago-payroll",
+      "payloadSchema": {
+       "empleadoId": "string",
+       "nombre": "string",
+       "apellido": "string",
+       "email": "string"
+      }
+     }
+    ],
+    "listeners": [
+     {
+      "id": "payroll-on-registro-hr",
+      "on": {
+       "event": "registro-empleado-hr",
+       "fromDomain": "HR"
+      },
+      "actions": [
+       {
+        "type": "emit",
+        "event": "configuracion-pago-payroll",
+        "mapping": {
+         "empleadoId": "empleadoId",
+         "nombre": "nombre",
+         "apellido": "apellido",
+         "email": "email"
         }
-      ],
-      "listeners": [
-        {
-          "id": "order-on-OrderPlaced",
-          "delayMs": 20,
-          "on": { "event": "OrderPlaced" },
-          "actions": [
-            {
-              "type": "set-state",
-              "status": "PLACED"
-            },
-            {
-              "type": "emit",
-              "event": "InventoryReserved",
-              "toDomain": "inventory",
-              "mapping": {
-                "reservationId": { "const": "RES-001" },
-                "orderId": "orderId",
-                "items": {
-                  "arrayFrom": "lines",
-                  "map": {
-                    "sku": "sku",
-                    "qty": "qty"
-                  }
-                },
-                "amount": 1,
-                "address": {
-                  "map": {
-                    "line1": { "from": "line1" },
-                    "city": { "from": "city" },
-                    "zip": { "from": "zip" },
-                    "country": { "from": "country" }
-                  },
-                  "objectFrom": "address"
-                }
-              }
-            }
-          ]
-        },
-        {
-          "id": "order-on-PaymentCaptured",
-          "delayMs": 25,
-          "on": { "event": "PaymentCaptured" },
-          "actions": [
-            {
-              "type": "set-state",
-              "status": "CONFIRMED"
-            },
-            {
-              "type": "emit",
-              "event": "OrderConfirmed",
-              "toDomain": "order",
-              "mapping": {
-                "orderId": "orderId",
-                "status": { "const": "CONFIRMED" }
-              }
-            }
-          ]
-        }
+       }
       ]
-    },
-    {
-      "id": "inventory",
-      "queue": "inventory",
-      "events": [
-        {
-          "name": "InventoryReserved",
-          "payloadSchema": {
-            "reservationId": "string",
-            "orderId": "string",
-            "items": [
-              {
-                "sku": "string",
-                "qty": "number"
-              }
-            ],
-            "amount": "number",
-            "address": {
-              "line1": "string",
-              "city": "string",
-              "zip": "string",
-              "country": "string"
-            }
-          }
+     }
+    ]
+   },
+   {
+    "id": "Facilities",
+    "queue": "facilities-queue",
+    "publishes": [
+     {
+      "event": "asignacion-espacio-facilities",
+      "payloadSchema": {
+       "empleadoId": "string",
+       "nombre": "string",
+       "apellido": "string"
+      }
+     }
+    ],
+    "listeners": [
+     {
+      "id": "facilities-on-configuracion-payroll",
+      "on": {
+       "event": "configuracion-pago-payroll",
+       "fromDomain": "Payroll"
+      },
+      "actions": [
+       {
+        "type": "emit",
+        "event": "asignacion-espacio-facilities",
+        "mapping": {
+         "empleadoId": "empleadoId",
+         "nombre": "nombre",
+         "apellido": "apellido"
         }
-      ],
-      "listeners": [
-        {
-          "id": "inventory-on-InventoryReserved",
-          "delayMs": 30,
-          "on": { "event": "InventoryReserved" },
-          "actions": [
-            {
-              "type": "set-state",
-              "status": "RESERVED"
-            },
-            {
-              "type": "emit",
-              "event": "PaymentAuthorized",
-              "toDomain": "payments",
-              "mapping": {
-                "paymentId": { "const": "PAY-001" },
-                "orderId": "orderId",
-                "reservationId": "reservationId",
-                "amount": 1,
-                "address": {
-                  "objectFrom": "address",
-                  "map": {
-                    "line1": "line1",
-                    "city": "city",
-                    "zip": "zip",
-                    "country": "country"
-                  }
-                }
-              }
-            }
-          ]
-        }
+       }
       ]
-    },
-    {
-      "id": "payments",
-      "queue": "payments",
-      "events": [
-        {
-          "name": "PaymentAuthorized",
-          "payloadSchema": {
-            "paymentId": "string",
-            "orderId": "string",
-            "reservationId": "string",
-            "amount": "number",
-            "address": {
-              "line1": "string",
-              "city": "string",
-              "zip": "string",
-              "country": "string"
-            }
-          }
-        }
-      ],
-      "listeners": [
-        {
-          "id": "payments-on-PaymentAuthorized",
-          "delayMs": 40,
-          "on": { "event": "PaymentAuthorized" },
-          "actions": [
-            {
-              "type": "set-state",
-              "status": "AUTHORIZED"
-            },
-            {
-              "type": "emit",
-              "event": "ShipmentPrepared",
-              "toDomain": "shipping",
-              "mapping": {
-                "shipmentId": { "const": "SHIP-001" },
-                "orderId": "orderId",
-                "paymentId": "paymentId",
-                "amount": 1,
-                "address": {
-                  "objectFrom": "address",
-                  "map": {
-                    "line1": "line1",
-                    "city": "city",
-                    "zip": "zip",
-                    "country": "country"
-                  }
-                }
-              }
-            }
-          ]
-        }
-      ]
-    },
-    {
-      "id": "shipping",
-      "queue": "shipping",
-      "events": [
-        {
-          "name": "ShipmentPrepared",
-          "payloadSchema": {
-            "shipmentId": "string",
-            "orderId": "string",
-            "paymentId": "string",
-            "amount": "number",
-            "address": {
-              "line1": "string",
-              "city": "string",
-              "zip": "string",
-              "country": "string"
-            }
-          }
-        }
-      ],
-      "listeners": [
-        {
-          "id": "shipping-on-ShipmentPrepared",
-          "delayMs": 50,
-          "on": { "event": "ShipmentPrepared" },
-          "actions": [
-            {
-              "type": "set-state",
-              "status": "PREPARED"
-            },
-            {
-              "type": "emit",
-              "event": "PaymentCaptured",
-              "toDomain": "order",
-              "mapping": {
-                "paymentId": "paymentId",
-                "orderId": "orderId",
-                "amount": 1
-              }
-            }
-          ]
-        }
-      ]
-    }
+     }
+    ]
+   }
   ]
-}
+ }
 ```
+
+##Ejemplo de ejecución:
+
+Primer Dominio (HR)
+http://hr.tia.deployreal.com
+
+JSON
+http://hr.tia.deployreal.com/config
+
+GETs
+No hay llamada GET ya que no tiene listeners. Se busca el evento correspondiente mediante la propiedad "start": true en el evento
+{
+"event": "registro-empleado-hr",
+"payloadSchema": {
+"empleadoId": "string",
+"nombre": "string",
+"apellido": "string",
+"email": "string"
+},
+"start": true
+}
+
+2. POST
+   POST hr-queue.hr.tia.deployreal.com/registro-empleado-hr
+   {
+   "empleadoId": "string",
+   "nombre": "string",
+   "apellido": "string",
+   "email": "string"
+   }
+
+Segundo dominio (Payroll)
+
+1. GET payroll-on-registro-hr.Payroll.tia.deployreal.com
+2. POST payroll-queue.Payroll.tia.deployreal.com/configuracion-pago-payroll
+   {
+   "empleadoId": "empleadoId",
+   "nombre": "nombre",
+   "apellido": "apellido",
+   "email": "email"
+   }
+
+flowchart TD
+A[Obtener dominio desde URL] --> B[GET config.json]
+B --> C[Buscar dominio en JSON]
+C --> D[Ejecutar GETs de listeners]
+D --> E[Determinar evento activo]
+E --> F[Renderizar formulario dinámico]
+F --> G[POST envío]
+G --> H[Mostrar banners y actualizar estado]

@@ -1,0 +1,93 @@
+{
+  "name": "alta-empleado-choreography",
+  "version": 2,
+  "domains": [
+    {
+      "id": "HR",
+      "queue": "hr-queue",
+      "publishes": [
+        {
+          "event": "registro-empleado-hr",
+          "payloadSchema": {
+            "empleadoId": "string",
+            "nombre": "string",
+            "apellido": "string",
+            "email": "string"
+          },
+          "start": true
+        }
+      ],
+      "listeners": []
+    },
+    {
+      "id": "Payroll",
+      "queue": "payroll-queue",
+      "publishes": [
+        {
+          "event": "configuracion-pago-payroll",
+          "payloadSchema": {
+            "empleadoId": "string",
+            "nombre": "string",
+            "apellido": "string",
+            "email": "string"
+          }
+        }
+      ],
+      "listeners": [
+        {
+          "id": "payroll-on-registro-hr",
+          "on": {
+            "event": "registro-empleado-hr",
+            "fromDomain": "HR"
+          },
+          "actions": [
+            {
+              "type": "emit",
+              "event": "configuracion-pago-payroll",
+              "mapping": {
+                "empleadoId": "empleadoId",
+                "nombre": "nombre",
+                "apellido": "apellido",
+                "email": "email"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "Facilities",
+      "queue": "facilities-queue",
+      "publishes": [
+        {
+          "event": "asignacion-espacio-facilities",
+          "payloadSchema": {
+            "empleadoId": "string",
+            "nombre": "string",
+            "apellido": "string"
+          }
+        }
+      ],
+      "listeners": [
+        {
+          "id": "facilities-on-configuracion-payroll",
+          "on": {
+            "event": "configuracion-pago-payroll",
+            "fromDomain": "Payroll"
+          },
+          "actions": [
+            {
+              "type": "emit",
+              "event": "asignacion-espacio-facilities",
+              "mapping": {
+                "empleadoId": "empleadoId",
+                "nombre": "nombre",
+                "apellido": "apellido"
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

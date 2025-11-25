@@ -6,62 +6,40 @@ import type { SagaFlow } from "../../common/types/sagaEvent";
 import { useSagaEvent } from "./useSagaEvent";
 
 const sagaFlowFixture: SagaFlow = {
-  name: "Fixture Saga",
+  name: "Alta empleado",
   version: 1,
-  event: "InventoryReserved",
   domains: [
     {
-      id: "inventory",
-      queue: "inventory",
-      events: [
+      id: "payroll",
+      queue: "payroll-queue",
+      publishes: [
         {
-          name: "InventoryReserved",
+          event: "configuracion-pago-payroll",
           payloadSchema: {
-            reservationId: "string",
-            orderId: "string",
-            items: [
-              {
-                sku: "string",
-                qty: "number",
-              },
-            ],
-            amount: "number",
+            empleadoId: "string",
+            nombre: "string",
+            apellido: "string",
+            email: "string",
           },
-        },
-      ],
-    },
-    {
-      id: "order",
-      queue: "orders",
-      events: [
-        {
-          name: "OrderPlaced",
-          payloadSchema: {
-            orderId: "string",
-          },
+          start: true,
         },
       ],
       listeners: [
         {
-          id: "order-to-inventory",
-          delayMs: 10,
-          on: { event: "OrderPlaced" },
+          id: "payroll-on-registro-hr",
+          on: {
+            event: "configuracion-pago-payroll",
+            fromDomain: "hr",
+          },
           actions: [
             {
               type: "emit",
-              event: "InventoryReserved",
-              toDomain: "inventory",
+              event: "configuracion-pago-payroll",
               mapping: {
-                reservationId: { const: "RES-001" },
-                orderId: "orderId",
-                items: {
-                  arrayFrom: "lines",
-                  map: {
-                    sku: "sku",
-                    qty: "qty",
-                  },
-                },
-                amount: { const: 99.5 },
+                empleadoId: "empleadoId",
+                nombre: "nombre",
+                apellido: "apellido",
+                email: "email",
               },
             },
           ],
@@ -72,8 +50,10 @@ const sagaFlowFixture: SagaFlow = {
 };
 
 vi.mock("../../services/sagaService", () => ({
-  fetchSagaFlow: vi.fn(async () => sagaFlowFixture),
+  fetchSagaConfig: vi.fn(async () => sagaFlowFixture),
+  fetchFirstMatchingListenerEvent: vi.fn(async () => "configuracion-pago-payroll"),
   submitSagaEvent: vi.fn(),
+  resolveDomainFromUrl: vi.fn(() => "payroll"),
 }));
 
 describe("useSagaEvent", () => {
@@ -82,8 +62,8 @@ describe("useSagaEvent", () => {
     vi.unstubAllEnvs();
   });
 
-  it("prefills default values from mapping definition", async () => {
-    vi.stubEnv("VITE_DOMAIN", "inventory");
+  it("prefills default values from listener mapping and selects active event", async () => {
+    vi.stubEnv("VITE_DOMAIN", "payroll");
 
     const queryClient = new QueryClient();
     const wrapper = ({ children }: PropsWithChildren) => (
@@ -93,14 +73,14 @@ describe("useSagaEvent", () => {
     const { result } = renderHook(useSagaEvent, { wrapper });
 
     await waitFor(() => {
-      expect(result.current.activeEvent?.name).toBe("InventoryReserved");
+      expect(result.current.activeEvent?.event).toBe("configuracion-pago-payroll");
     });
 
     expect(result.current.form.getValues()).toMatchObject({
-      reservationId: "RES-001",
-      orderId: expect.any(String),
-      items: [{ sku: expect.any(String), qty: expect.anything() }],
-      amount: 99.5,
+      empleadoId: expect.any(String),
+      nombre: expect.any(String),
+      apellido: expect.any(String),
+      email: expect.any(String),
     });
   });
 });

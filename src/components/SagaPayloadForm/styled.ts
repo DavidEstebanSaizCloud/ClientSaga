@@ -253,3 +253,18 @@ export const SuccessMessage = styled.p`
   font-size: 1rem;
   color: ${Colors.gray500};
 `;
+
+export const PollingRow = styled.div`
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.65rem 0.85rem;
+  border-radius: 12px;
+  border: 1px dashed rgba(15, 23, 42, 0.12);
+  color: ${Colors.secondary};
+
+  ${Spinner} {
+    border-color: rgba(59, 130, 246, 0.25);
+    border-top-color: ${Colors.primary};
+  }
+`;

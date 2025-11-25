@@ -1,230 +1,85 @@
-import type { SagaEventSubmission, SagaFlow } from "../common/types/sagaEvent";
+import axios from "axios";
+import type {
+  SagaEventSubmission,
+  SagaFlow,
+  SagaListener,
+} from "../common/types/sagaEvent";
 
-const mockSagaFlow: SagaFlow = {
-  name: "cambio-de-titular-utility",
-  version: 1,
-  event: "actualizacion-de-datos",
-  domains: [
-    {
-      id: "gestion-de-clientes",
-      queue: "cola-gestion-clientes",
-      events: [
-        {
-          name: "solicitud-de-cambio",
-          payloadSchema: {
-            clienteId: "string",
-            nombreNuevoTitular: "string",
-            documentoIdentidadNuevoTitular: "string",
-          },
-        },
-        {
-          name: "actualizacion-de-datos",
-          payloadSchema: {
-            clienteId: "string",
-            nombreNuevoTitular: "string",
-            documentoIdentidadNuevoTitular: "string",
-          },
-        },
-      ],
-      listeners: [
-        {
-          id: "listener-verificacion-identidad",
-          on: {
-            event: "solicitud-de-cambio",
-          },
-          actions: [
-            {
-              type: "emit",
-              event: "verificacion-de-identidad",
-              mapping: {
-                clienteId: "clienteId",
-                nombreNuevoTitular: "nombreNuevoTitular",
-                documentoIdentidadNuevoTitular: "documentoIdentidadNuevoTitular",
-              },
-            },
-          ],
-        },
-      ],
-    },
-    {
-      id: "servicio-al-cliente",
-      queue: "cola-servicio-cliente",
-      events: [
-        {
-          name: "verificacion-de-identidad",
-          payloadSchema: {
-            clienteId: "string",
-            nombreNuevoTitular: "string",
-            documentoIdentidadNuevoTitular: "string",
-          },
-        },
-        {
-          name: "confirmacion-al-nuevo-titular",
-          payloadSchema: {
-            clienteId: "string",
-            mensaje: "string",
-          },
-        },
-      ],
-      listeners: [
-        {
-          id: "listener-revision-contrato",
-          on: {
-            event: "verificacion-de-identidad",
-          },
-          actions: [
-            {
-              type: "emit",
-              event: "revision-de-contrato",
-              mapping: {
-                clienteId: "clienteId",
-                nombreNuevoTitular: "nombreNuevoTitular",
-                documentoIdentidadNuevoTitular: "documentoIdentidadNuevoTitular",
-              },
-            },
-          ],
-        },
-      ],
-    },
-    {
-      id: "legal",
-      queue: "cola-legal",
-      events: [
-        {
-          name: "revision-de-contrato",
-          payloadSchema: {
-            clienteId: "string",
-            nombreNuevoTitular: "string",
-            documentoIdentidadNuevoTitular: "string",
-          },
-        },
-      ],
-      listeners: [
-        {
-          id: "listener-actualizacion-datos",
-          on: {
-            event: "revision-de-contrato",
-          },
-          actions: [
-            {
-              type: "emit",
-              event: "actualizacion-de-datos",
-              toDomain: "gestion-de-clientes",
-              mapping: {
-                clienteId: "clienteId",
-                nombreNuevoTitular: "nombreNuevoTitular",
-                documentoIdentidadNuevoTitular: "documentoIdentidadNuevoTitular",
-              },
-            },
-          ],
-        },
-      ],
-    },
-    {
-      id: "facturacion",
-      queue: "cola-facturacion",
-      events: [
-        {
-          name: "notificacion-a-facturacion",
-          payloadSchema: {
-            clienteId: "string",
-            nombreNuevoTitular: "string",
-            documentoIdentidadNuevoTitular: "string",
-          },
-        },
-      ],
-      listeners: [
-        {
-          id: "listener-notificacion-facturacion",
-          on: {
-            event: "actualizacion-de-datos",
-          },
-          actions: [
-            {
-              type: "emit",
-              event: "notificacion-a-facturacion",
-              mapping: {
-                clienteId: "clienteId",
-                nombreNuevoTitular: "nombreNuevoTitular",
-                documentoIdentidadNuevoTitular: "documentoIdentidadNuevoTitular",
-              },
-            },
-          ],
-        },
-      ],
-    },
-    {
-      id: "sistemas-de-informacion",
-      queue: "cola-sistemas-informacion",
-      events: [
-        {
-          name: "ajuste-en-sistemas",
-          payloadSchema: {
-            clienteId: "string",
-            nombreNuevoTitular: "string",
-            documentoIdentidadNuevoTitular: "string",
-          },
-        },
-      ],
-      listeners: [
-        {
-          id: "listener-ajuste-sistemas",
-          on: {
-            event: "notificacion-a-facturacion",
-          },
-          actions: [
-            {
-              type: "emit",
-              event: "ajuste-en-sistemas",
-              mapping: {
-                clienteId: "clienteId",
-                nombreNuevoTitular: "nombreNuevoTitular",
-                documentoIdentidadNuevoTitular: "documentoIdentidadNuevoTitular",
-              },
-            },
-          ],
-        },
-        {
-          id: "listener-confirmacion-titular",
-          on: {
-            event: "ajuste-en-sistemas",
-          },
-          actions: [
-            {
-              type: "emit",
-              event: "confirmacion-al-nuevo-titular",
-              toDomain: "servicio-al-cliente",
-              mapping: {
-                clienteId: "clienteId",
-                mensaje: {
-                  const: "El cambio de titularidad ha sido completado exitosamente.",
-                },
-              },
-            },
-          ],
-        },
-      ],
-    },
-  ],
-};
+const DEFAULT_TIMEOUT = 6000;
+const PROTOCOL = "http";
 
-const mockDelay = (ms = 450) =>
-  new Promise((resolve) => {
-    setTimeout(resolve, ms);
-  });
+export function resolveDomainFromUrl(hostname: string, fallback?: string): string {
+  const candidate = hostname.split(".")[0] ?? "";
+  if (candidate && candidate !== "localhost") {
+    return candidate;
+  }
+  if (fallback && fallback.trim().length > 0) {
+    return fallback.trim();
+  }
+  return "local";
+}
 
-export async function fetchSagaFlow(): Promise<SagaFlow> {
-  await mockDelay();
-  return mockSagaFlow;
+export async function fetchSagaConfig(domainId: string): Promise<SagaFlow> {
+  const candidates = [
+    `${PROTOCOL}://${domainId}.tia.deployreal.com:5173/config.json`,
+    `${PROTOCOL}://${domainId}.tia.deployreal.com:5173/config`,
+  ];
+
+  let lastError: unknown;
+  for (const url of candidates) {
+    try {
+      const response = await axios.get<SagaFlow>(url, { timeout: DEFAULT_TIMEOUT });
+      return response.data;
+    } catch (error) {
+      lastError = error;
+    }
+  }
+
+  throw lastError instanceof Error
+    ? lastError
+    : new Error("No se pudo obtener config.json");
+}
+
+export async function fetchListenerEvent(
+  domainId: string,
+  listener: SagaListener,
+): Promise<string | null> {
+  const url = `${PROTOCOL}://${listener.id}.${domainId}.tia.deployreal.com`;
+  try {
+    const response = await axios.get<{ event?: string }>(url, {
+      timeout: DEFAULT_TIMEOUT,
+    });
+    const eventName = response.data?.event;
+    return typeof eventName === "string" && eventName.length > 0 ? eventName : null;
+  } catch (error) {
+    // No interrumpimos el flujo si un listener falla; simplemente devolvemos null.
+    console.warn(`Listener ${listener.id} (${domainId}) no respondió`, error);
+    return null;
+  }
+}
+
+export async function fetchFirstMatchingListenerEvent(
+  domainId: string,
+  listeners: SagaListener[],
+): Promise<string | null> {
+  if (!listeners.length) {
+    return null;
+  }
+
+  const settled = await Promise.allSettled(
+    listeners.map((listener) => fetchListenerEvent(domainId, listener)),
+  );
+
+  for (const result of settled) {
+    if (result.status === "fulfilled" && result.value) {
+      return result.value;
+    }
+  }
+
+  return null;
 }
 
 export async function submitSagaEvent(submission: SagaEventSubmission): Promise<void> {
-  await mockDelay(600);
-  const shouldFail = submission.eventName === "OrderConfirmed";
-
-  if (shouldFail) {
-    throw new Error("Mocked failure while sending saga event");
-  }
-
-  console.info("Saga event dispatched", submission);
+  const url = `${PROTOCOL}://${submission.queue}.${submission.domainId}.tia.deployreal.com/${submission.eventName}`;
+  await axios.post(url, submission.payload, { timeout: DEFAULT_TIMEOUT });
 }

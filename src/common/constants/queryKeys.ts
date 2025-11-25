@@ -3,4 +3,5 @@ export const QUERY_KEYS = {
   users: "users",
   dashboard: "dashboard",
   sagaFlow: "sagaFlow",
+  activeEvent: "activeEvent",
 } as const;

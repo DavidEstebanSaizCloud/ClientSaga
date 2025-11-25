@@ -13,28 +13,30 @@ export type SagaSchemaArray =
   | SagaSchemaPrimitive[]
   | SagaSchemaObject[];
 
-export interface SagaEventDefinition {
-  name: string;
+export interface SagaPublish {
+  event: string;
   payloadSchema: SagaSchemaObject;
+  start?: boolean;
 }
 
 export interface SagaDomain {
   id: string;
   queue: string;
-  events: SagaEventDefinition[];
+  publishes: SagaPublish[];
   listeners?: SagaListener[];
 }
 
 export interface SagaFlow {
   name: string;
   version: number;
-  event: string;
+  event?: string;
   domains: SagaDomain[];
 }
 
 export interface SagaEventSubmission {
   domainId: string;
   eventName: string;
+  queue: string;
   payload: Record<string, unknown>;
 }
 
@@ -42,9 +44,9 @@ export type SagaFormValues = Record<string, unknown>;
 
 export interface SagaListener {
   id: string;
-  delayMs: number;
   on: {
     event: string;
+    fromDomain?: string;
   };
   actions: SagaListenerAction[];
 }
@@ -61,7 +63,7 @@ export interface SagaListenerSetStateAction {
 export interface SagaListenerEmitAction {
   type: "emit";
   event: string;
-  toDomain: string;
+  toDomain?: string;
   mapping: SagaListenerMapping;
 }
 

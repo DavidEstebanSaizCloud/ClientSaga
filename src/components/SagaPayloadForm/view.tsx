@@ -20,7 +20,7 @@ import {
 } from "./useSagaPayloadForm";
 
 export default function SagaPayloadForm(props: SagaPayloadFormProps) {
-  const { banner, schema, onSubmit, eventName, isLocked, successState } =
+  const { banner, schema, onSubmit, eventName, isLocked, successState, isRefreshing } =
     useSagaPayloadForm(props);
   const { formState } = useFormContext<SagaFormValues>();
 
@@ -30,6 +30,12 @@ export default function SagaPayloadForm(props: SagaPayloadFormProps) {
         <S.SuccessIcon aria-hidden="true">✓</S.SuccessIcon>
         <S.SuccessTitle>{successState.title}</S.SuccessTitle>
         <S.SuccessMessage>{successState.description}</S.SuccessMessage>
+        {isRefreshing && (
+          <S.PollingRow>
+            <S.Spinner aria-hidden="true" />
+            <span>Actualizando evento…</span>
+          </S.PollingRow>
+        )}
       </S.SuccessState>
     );
   }

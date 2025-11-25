@@ -15,6 +15,7 @@ export default function SagaEventPage() {
     status,
     errorMessage,
     isLocked,
+    isRefreshing,
     isLoading,
     loadError,
   } = useSagaEvent();
@@ -61,11 +62,12 @@ export default function SagaEventPage() {
         <FormProvider {...form}>
           <SagaPayloadForm
             schema={activeEvent.payloadSchema}
-            eventName={activeEvent.name}
+            eventName={activeEvent.event}
             onSubmit={handleSubmit}
             isLocked={isLocked}
             status={status}
             errorMessage={errorMessage}
+            isRefreshing={isRefreshing}
           />
         </FormProvider>
       </S.Layout>
