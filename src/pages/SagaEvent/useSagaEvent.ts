@@ -18,7 +18,7 @@ import {
 import {
   fetchFirstMatchingListenerEvent,
   fetchSagaConfig,
-  resolveDomainFromUrl,
+  resolveDomainParts,
   submitSagaEvent,
 } from "../../services/sagaService";
 import type { SagaTimelineEvent } from "../../components/SagaTimeline/useSagaTimeline";
@@ -48,8 +48,13 @@ interface UseSagaEventResult {
 }
 
 export function useSagaEvent(): UseSagaEventResult {
-  const domainId = useMemo(
-    () => resolveDomainFromUrl(window.location.hostname, import.meta.env.VITE_DOMAIN),
+  const { domainId, restHost } = useMemo(
+    () =>
+      resolveDomainParts(
+        window.location.hostname,
+        window.location.port,
+        import.meta.env.VITE_DOMAIN,
+      ),
     [],
   );
   const [status, setStatus] = useState<SubmissionStatus>("idle");
@@ -65,8 +70,8 @@ export function useSagaEvent(): UseSagaEventResult {
   });
 
   const sagaQuery = useQuery({
-    queryKey: [QUERY_KEYS.sagaFlow, domainId],
-    queryFn: () => fetchSagaConfig(domainId),
+    queryKey: [QUERY_KEYS.sagaFlow, domainId, restHost],
+    queryFn: () => fetchSagaConfig(domainId, restHost),
     staleTime: 2 * 60 * 1000,
     retry: 1,
   });
@@ -89,7 +94,7 @@ export function useSagaEvent(): UseSagaEventResult {
       if (!domain) {
         throw new Error("No se encontró el dominio solicitado.");
       }
-      return resolveActivePublish(domain);
+      return resolveActivePublish(domain, restHost);
     },
     refetchOnWindowFocus: false,
     refetchInterval: status === "success" ? 5000 : false,
@@ -152,6 +157,7 @@ export function useSagaEvent(): UseSagaEventResult {
         domainId: domain.id,
         queue: domain.queue,
         eventName: activeEvent.event,
+        restHost,
         payload,
       });
       setStatus("success");
@@ -192,13 +198,20 @@ export function useSagaEvent(): UseSagaEventResult {
   };
 }
 
-async function resolveActivePublish(domain: SagaDomain): Promise<ActiveEventResult> {
+async function resolveActivePublish(
+  domain: SagaDomain,
+  restHost: string,
+): Promise<ActiveEventResult> {
   if (!domain.publishes || !domain.publishes.length) {
     throw new Error("El dominio no tiene eventos configurados.");
   }
 
   const listenerEvent =
-    (await fetchFirstMatchingListenerEvent(domain.id, domain.listeners ?? [])) ?? null;
+    (await fetchFirstMatchingListenerEvent(
+      domain.id,
+      restHost,
+      domain.listeners ?? [],
+    )) ?? null;
   const preferredEvent =
     listenerEvent ??
     domain.publishes.find((item) => item.start)?.event ??

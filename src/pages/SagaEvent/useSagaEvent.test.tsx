@@ -53,7 +53,11 @@ vi.mock("../../services/sagaService", () => ({
   fetchSagaConfig: vi.fn(async () => sagaFlowFixture),
   fetchFirstMatchingListenerEvent: vi.fn(async () => "configuracion-pago-payroll"),
   submitSagaEvent: vi.fn(),
-  resolveDomainFromUrl: vi.fn(() => "payroll"),
+  resolveDomainParts: vi.fn(() => ({
+    domainId: "payroll",
+    restHost: "tia.deployreal.com",
+    baseHost: "payroll.tia.deployreal.com",
+  })),
 }));
 
 describe("useSagaEvent", () => {
