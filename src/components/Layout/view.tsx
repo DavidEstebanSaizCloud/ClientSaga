@@ -16,8 +16,17 @@ export default function Layout({
   logoAlt,
 }: PropsWithChildren<LayoutProps>) {
   const theme: ThemeDefinition = useMemo(() => initializeRandomTheme(), []);
+  const domainFromHost = useMemo(() => {
+    if (typeof window !== "undefined" && window.location?.hostname) {
+      const [first] = window.location.hostname.split(".");
+      if (first) {
+        return first;
+      }
+    }
+    return null;
+  }, []);
 
-  const effectiveCompanyName = companyName ?? theme.companyName;
+  const effectiveCompanyName = domainFromHost ?? companyName ?? theme.companyName;
   const effectiveLogoSrc = logoSrc ?? theme.logo.src;
   const effectiveLogoAlt = logoAlt ?? theme.logo.alt;
   const palette = theme.layout;
@@ -26,9 +35,7 @@ export default function Layout({
     <S.Wrapper $palette={palette}>
       <S.Header $palette={palette}>
         <S.Logo src={effectiveLogoSrc} alt={effectiveLogoAlt} $palette={palette} />
-        <S.CompanyName $palette={palette}>
-          {effectiveCompanyName}
-        </S.CompanyName>
+        <S.CompanyName $palette={palette}>{effectiveCompanyName}</S.CompanyName>
       </S.Header>
 
       <S.Content $palette={palette}>{children}</S.Content>
