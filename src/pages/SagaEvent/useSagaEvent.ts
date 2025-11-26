@@ -30,6 +30,7 @@ type SagaEventSubmitHandler = ReturnType<UseFormReturn<SagaFormValues>["handleSu
 interface ActiveEventResult {
   publish: SagaPublish;
   mapping?: SagaListenerMapping;
+  initialPayload?: Record<string, unknown>;
 }
 
 interface UseSagaEventResult {
@@ -105,6 +106,7 @@ export function useSagaEvent(): UseSagaEventResult {
 
   const activeEvent = activeEventQuery.data?.publish;
   const activeEventMapping = activeEventQuery.data?.mapping;
+  const activeInitialPayload = activeEventQuery.data?.initialPayload;
 
   useEffect(() => {
     if (!activeEvent) {
@@ -115,10 +117,13 @@ export function useSagaEvent(): UseSagaEventResult {
     if (!eventChanged && status !== "success") {
       return;
     }
-    const defaults = buildDefaultValuesFromMapping(
-      activeEvent.payloadSchema,
-      activeEventMapping,
-    );
+    const defaults =
+      activeInitialPayload && typeof activeInitialPayload === "object"
+        ? (castValuesToSchema(
+            activeEvent.payloadSchema,
+            activeInitialPayload,
+          ) as Record<string, unknown>)
+        : buildDefaultValuesFromMapping(activeEvent.payloadSchema, activeEventMapping);
     form.reset(defaults);
     setCurrentEventName(activeEvent.event);
     if (eventChanged) {
@@ -205,8 +210,9 @@ async function resolveActivePublish(domain: SagaDomain): Promise<ActiveEventResu
     throw new Error("El dominio no tiene eventos configurados.");
   }
 
-  const listenerEvent =
+  const listenerResult =
     (await fetchFirstMatchingListenerEvent(domain.id, domain.listeners ?? [])) ?? null;
+  const listenerEvent = listenerResult?.event ?? null;
   const firstPublish = domain.publishes[0];
   if (!firstPublish) {
     throw new Error("No se pudo determinar el evento inicial.");
@@ -226,6 +232,7 @@ async function resolveActivePublish(domain: SagaDomain): Promise<ActiveEventResu
   return {
     publish,
     mapping: findMappingForEvent(domain, publish.event),
+    initialPayload: listenerResult?.payload,
   };
 }
 

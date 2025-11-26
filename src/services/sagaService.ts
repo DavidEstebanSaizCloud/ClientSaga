@@ -60,14 +60,26 @@ export async function fetchSagaConfig(
 export async function fetchListenerEvent(
   domainId: string,
   listener: SagaListener,
-): Promise<string | null> {
+): Promise<{ event?: string; payload?: Record<string, unknown> } | null> {
   const url = `${PROTOCOL}://${domainId}.${FIXED_HOST}/${listener.id}`;
   try {
-    const response = await axios.get<{ event?: string }>(url, {
-      timeout: DEFAULT_TIMEOUT,
-    });
+    const response = await axios.get<{ event?: string; payload?: Record<string, unknown> }>(
+      url,
+      {
+        timeout: DEFAULT_TIMEOUT,
+      },
+    );
     const eventName = response.data?.event;
-    return typeof eventName === "string" && eventName.length > 0 ? eventName : null;
+    if (typeof eventName === "string" && eventName.length > 0) {
+      return {
+        event: eventName,
+        payload: response.data?.payload,
+      };
+    }
+    if (response.data && "payload" in response.data) {
+      return { payload: response.data.payload };
+    }
+    return null;
   } catch (error) {
     // No interrumpimos el flujo si un listener falla; simplemente devolvemos null.
     console.warn(`Listener ${listener.id} (${domainId}) no respondió`, error);
@@ -78,7 +90,7 @@ export async function fetchListenerEvent(
 export async function fetchFirstMatchingListenerEvent(
   domainId: string,
   listeners: SagaListener[],
-): Promise<string | null> {
+): Promise<{ event?: string; payload?: Record<string, unknown> } | null> {
   if (!listeners.length) {
     return null;
   }

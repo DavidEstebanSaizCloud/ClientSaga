@@ -144,7 +144,7 @@ http://{dominio}.tia.deployreal.com
    - Si un campo es un **array de objetos**, cada objeto se representa como una **subcaja con sus campos individuales**.
      - El bloque completo muestra el título de la clave del array.
      - Se debe permitir añadir o eliminar elementos del array de forma sencilla.
-   - Los valores iniciales del formulario se definen en la propiedad `listeners`, siendo el elemento del array correspondiente el `listener` en el que coincida el campo on.event con el campo `name` del evento. Dentro de esta objeto, en la propiedad `mapping` se muestran propiedades que indican el valor por defecto de los campos del formulario, ya que coinciden las claves de estos valores con las claves de `payloadSchema`
+   - Los valores iniciales del formulario se definen en el resultado del GET que de éxito, ya que coinciden las claves de estos valores con las claves de `payloadSchema`
 
 3. **Envío del formulario**
    - Al pulsar el botón **Enviar**, los datos introducidos deben enviarse en **exactamente la misma estructura** que el `payloadSchema` original.

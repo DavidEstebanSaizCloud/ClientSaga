@@ -14,10 +14,7 @@ import {
   isSchemaObject,
 } from "../../common/utils/sagaSchema";
 import * as S from "./styled";
-import {
-  useSagaPayloadForm,
-  type SagaPayloadFormProps,
-} from "./useSagaPayloadForm";
+import { useSagaPayloadForm, type SagaPayloadFormProps } from "./useSagaPayloadForm";
 
 export default function SagaPayloadForm(props: SagaPayloadFormProps) {
   const { banner, schema, onSubmit, eventName, isLocked, successState, isRefreshing } =
@@ -30,12 +27,6 @@ export default function SagaPayloadForm(props: SagaPayloadFormProps) {
         <S.SuccessIcon aria-hidden="true">✓</S.SuccessIcon>
         <S.SuccessTitle>{successState.title}</S.SuccessTitle>
         <S.SuccessMessage>{successState.description}</S.SuccessMessage>
-        {isRefreshing && (
-          <S.PollingRow>
-            <S.Spinner aria-hidden="true" />
-            <span>Actualizando evento…</span>
-          </S.PollingRow>
-        )}
       </S.SuccessState>
     );
   }
@@ -104,25 +95,11 @@ interface SchemaFieldProps {
 
 function SchemaField({ name, label, schema, disabled }: SchemaFieldProps) {
   if (isPrimitiveSchema(schema)) {
-    return (
-      <PrimitiveField
-        name={name}
-        label={label}
-        type={schema}
-        disabled={disabled}
-      />
-    );
+    return <PrimitiveField name={name} label={label} type={schema} disabled={disabled} />;
   }
 
   if (isSchemaArray(schema)) {
-    return (
-      <ArrayField
-        name={name}
-        label={label}
-        schema={schema}
-        disabled={disabled}
-      />
-    );
+    return <ArrayField name={name} label={label} schema={schema} disabled={disabled} />;
   }
 
   if (isSchemaObject(schema)) {
@@ -144,35 +121,26 @@ interface PrimitiveFieldProps {
   disabled: boolean;
 }
 
-function PrimitiveField({
-  name,
-  label,
-  type,
-  disabled,
-}: PrimitiveFieldProps) {
-  const { register, getFieldState, formState } =
-    useFormContext<SagaFormValues>();
+function PrimitiveField({ name, label, type, disabled }: PrimitiveFieldProps) {
+  const { register, getFieldState, formState } = useFormContext<SagaFormValues>();
   const inputId = name.replace(/[^a-zA-Z0-9]/g, "-");
   const fieldState = getFieldState(name, formState);
   const errorMessage = fieldState.error?.message;
   const isInvalid = Boolean(errorMessage);
 
-  const registerOptions: RegisterOptions<SagaFormValues, Path<SagaFormValues>> =
-    type === "number"
-      ? {
-          valueAsNumber: true,
-          required: "Campo obligatorio",
-          validate: (value: unknown) => {
-            const numericValue =
-              typeof value === "number" ? value : Number(value);
-            return !Number.isNaN(numericValue)
-              ? true
-              : "Introduce un número válido";
-          },
-        }
-      : {
-          required: "Campo obligatorio",
-        };
+  const registerOptions: RegisterOptions<SagaFormValues, Path<SagaFormValues>> = type ===
+  "number"
+    ? {
+        valueAsNumber: true,
+        required: "Campo obligatorio",
+        validate: (value: unknown) => {
+          const numericValue = typeof value === "number" ? value : Number(value);
+          return !Number.isNaN(numericValue) ? true : "Introduce un número válido";
+        },
+      }
+    : {
+        required: "Campo obligatorio",
+      };
 
   return (
     <S.InputGroup data-invalid={isInvalid || undefined}>
