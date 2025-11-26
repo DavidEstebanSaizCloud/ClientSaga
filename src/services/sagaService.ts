@@ -7,6 +7,7 @@ import type {
 
 const DEFAULT_TIMEOUT = 6000;
 const PROTOCOL = "https";
+const FIXED_HOST = "tia.deployreal.com";
 
 export interface DomainParts {
   domainId: string;
@@ -19,17 +20,13 @@ export function resolveDomainParts(
   port: string,
   fallback?: string,
 ): DomainParts {
-  const baseHost = port ? `${host}:${port}` : host;
-  const [first, ...rest] = host.split(".");
+  const [first] = host.split(".");
   const domainId =
     first && first !== "localhost"
       ? first
       : (fallback && fallback.trim()) || "local";
-  const tail = rest.join(".");
-  const restHost = tail
-    ? `${tail}${port ? `:${port}` : ""}`
-    : baseHost;
-
+  const restHost = FIXED_HOST;
+  const baseHost = `${domainId}.${restHost}`;
   return { domainId, restHost, baseHost };
 }
 
