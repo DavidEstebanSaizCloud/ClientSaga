@@ -44,7 +44,6 @@ interface UseSagaEventResult {
   errorMessage: string;
   isLocked: boolean;
   isLoading: boolean;
-  isRefreshing: boolean;
   loadError: unknown;
 }
 
@@ -61,7 +60,6 @@ export function useSagaEvent(): UseSagaEventResult {
   const [status, setStatus] = useState<SubmissionStatus>("idle");
   const [errorMessage, setErrorMessage] = useState("");
   const [currentEventName, setCurrentEventName] = useState<string | null>(null);
-  const [isRefreshing, setIsRefreshing] = useState(false);
   const firstFocusDoneRef = useRef(false);
 
   const form = useForm<SagaFormValues>({
@@ -101,7 +99,7 @@ export function useSagaEvent(): UseSagaEventResult {
       return resolveActivePublish(domain);
     },
     refetchOnWindowFocus: false,
-    refetchInterval: status === "success" ? 5000 : false,
+    refetchInterval: false,
   });
 
   const activeEvent = activeEventQuery.data?.publish;
@@ -119,20 +117,26 @@ export function useSagaEvent(): UseSagaEventResult {
     }
     const defaults =
       activeInitialPayload && typeof activeInitialPayload === "object"
-        ? (castValuesToSchema(
-            activeEvent.payloadSchema,
-            activeInitialPayload,
-          ) as Record<string, unknown>)
+        ? (castValuesToSchema(activeEvent.payloadSchema, activeInitialPayload) as Record<
+            string,
+            unknown
+          >)
         : buildDefaultValuesFromMapping(activeEvent.payloadSchema, activeEventMapping);
     form.reset(defaults);
     setCurrentEventName(activeEvent.event);
     if (eventChanged) {
       setStatus("idle");
       setErrorMessage("");
-      setIsRefreshing(false);
       firstFocusDoneRef.current = false;
     }
-  }, [activeEvent, activeEventMapping, currentEventName, form, status]);
+  }, [
+    activeEvent,
+    activeEventMapping,
+    activeInitialPayload,
+    currentEventName,
+    form,
+    status,
+  ]);
 
   useEffect(() => {
     if (!activeEvent) {
@@ -168,12 +172,9 @@ export function useSagaEvent(): UseSagaEventResult {
         payload,
       });
       setStatus("success");
-      setIsRefreshing(true);
-      await activeEventQuery.refetch();
     } catch (error) {
       setStatus("error");
       setErrorMessage(error instanceof Error ? error.message : "Error desconocido");
-      setIsRefreshing(false);
     }
   });
 
@@ -200,7 +201,6 @@ export function useSagaEvent(): UseSagaEventResult {
     errorMessage,
     isLocked,
     isLoading: sagaQuery.isLoading || activeEventQuery.isLoading,
-    isRefreshing,
     loadError: sagaQuery.error ?? activeEventQuery.error,
   };
 }
@@ -228,7 +228,7 @@ async function resolveActivePublish(domain: SagaDomain): Promise<ActiveEventResu
   if (!publish) {
     throw new Error("No se pudo determinar el evento activo.");
   }
-
+  console.log("HOLAS_GET_RESPONSE", listenerResult);
   return {
     publish,
     mapping: findMappingForEvent(domain, publish.event),
