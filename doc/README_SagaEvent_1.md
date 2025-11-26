@@ -23,7 +23,7 @@ http://{dominio}.{todo el resto}
 - Una vez obtenido el dominio actual mediante la url y el JSON, se busca en el array "domains" el objeto que coincida "name" con nuestro dominio actual.
 - Con el objeto obtenido usamos el array de la propiedad "listeners" para hacer un GET por cada elemento del array, devolvemos su resultado en un array mediante una promesa de js.
   Los GETS se construirían de la siguiente manera:
-  GET {dominio}.{todo el resto}/{id del listener}
+  GET https://{dominio}.{todo el resto}/{id del listener}
   así pues, para el dominio :
 
   {
@@ -62,7 +62,7 @@ http://{dominio}.{todo el resto}
   }
   ]
   }
-  Se llamaría a un solo GET payroll-on-registro-hr.Payroll.{todo el resto}
+  Se llamaría a un solo GET https://payroll-on-registro-hr.Payroll.{todo el resto}
 
   en uno de los elementos del array resultado llegará un objeto con esta estructura
   {event: "registro-empleado-hr"}
@@ -148,7 +148,7 @@ http://{dominio}.{todo el resto}
 
 3. **Envío del formulario**
    - Al pulsar el botón **Enviar**, los datos introducidos deben enviarse en **exactamente la misma estructura** que el `payloadSchema` original.
-   - Se hará una llamada POST {queue}.{dominio}.{todo el resto}/{evento}.
+   - Se hará una llamada POST https://{queue}.{dominio}.{todo el resto}/{evento}.
    - Mientras el envío esté en curso:
      - Todos los campos y el botón de envío se bloquean.
      - Al botón "Enviar" se le añade después del texto pero dentro del botón un spinner animado

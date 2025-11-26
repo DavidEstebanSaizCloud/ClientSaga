@@ -6,7 +6,7 @@ import type {
 } from "../common/types/sagaEvent";
 
 const DEFAULT_TIMEOUT = 6000;
-const PROTOCOL = "http";
+const PROTOCOL = "https";
 
 export interface DomainParts {
   domainId: string;
