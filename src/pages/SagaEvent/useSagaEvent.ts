@@ -94,7 +94,7 @@ export function useSagaEvent(): UseSagaEventResult {
       if (!domain) {
         throw new Error("No se encontró el dominio solicitado.");
       }
-      return resolveActivePublish(domain, restHost);
+      return resolveActivePublish(domain);
     },
     refetchOnWindowFocus: false,
     refetchInterval: status === "success" ? 5000 : false,
@@ -157,7 +157,6 @@ export function useSagaEvent(): UseSagaEventResult {
         domainId: domain.id,
         queue: domain.queue,
         eventName: activeEvent.event,
-        restHost,
         payload,
       });
       setStatus("success");
@@ -200,18 +199,14 @@ export function useSagaEvent(): UseSagaEventResult {
 
 async function resolveActivePublish(
   domain: SagaDomain,
-  restHost: string,
 ): Promise<ActiveEventResult> {
   if (!domain.publishes || !domain.publishes.length) {
     throw new Error("El dominio no tiene eventos configurados.");
   }
 
   const listenerEvent =
-    (await fetchFirstMatchingListenerEvent(
-      domain.id,
-      restHost,
-      domain.listeners ?? [],
-    )) ?? null;
+    (await fetchFirstMatchingListenerEvent(domain.id, domain.listeners ?? [])) ??
+    null;
   const firstPublish = domain.publishes[0];
   if (!firstPublish) {
     throw new Error("No se pudo determinar el evento inicial.");

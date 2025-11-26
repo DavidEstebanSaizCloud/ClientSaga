@@ -20,12 +20,15 @@ export function resolveDomainParts(
   port: string,
   fallback?: string,
 ): DomainParts {
-  const [first] = host.split(".");
+  const [first, ...rest] = host.split(".");
   const domainId =
     first && first !== "localhost"
       ? first
       : (fallback && fallback.trim()) || "local";
-  const restHost = FIXED_HOST;
+  const tail = rest.join(".");
+  const restHost = tail
+    ? `${tail}${port ? `:${port}` : ""}`
+    : "tia.deployreal.com";
   const baseHost = `${domainId}.${restHost}`;
   return { domainId, restHost, baseHost };
 }
@@ -56,10 +59,9 @@ export async function fetchSagaConfig(
 
 export async function fetchListenerEvent(
   domainId: string,
-  restHost: string,
   listener: SagaListener,
 ): Promise<string | null> {
-  const url = `${PROTOCOL}://${domainId}.${restHost}/${listener.id}`;
+  const url = `${PROTOCOL}://${domainId}.${FIXED_HOST}/${listener.id}`;
   try {
     const response = await axios.get<{ event?: string }>(url, {
       timeout: DEFAULT_TIMEOUT,
@@ -75,7 +77,6 @@ export async function fetchListenerEvent(
 
 export async function fetchFirstMatchingListenerEvent(
   domainId: string,
-  restHost: string,
   listeners: SagaListener[],
 ): Promise<string | null> {
   if (!listeners.length) {
@@ -83,7 +84,7 @@ export async function fetchFirstMatchingListenerEvent(
   }
 
   const settled = await Promise.allSettled(
-    listeners.map((listener) => fetchListenerEvent(domainId, restHost, listener)),
+    listeners.map((listener) => fetchListenerEvent(domainId, listener)),
   );
 
   for (const result of settled) {
@@ -96,8 +97,8 @@ export async function fetchFirstMatchingListenerEvent(
 }
 
 export async function submitSagaEvent(
-  submission: SagaEventSubmission & { restHost: string },
+  submission: SagaEventSubmission,
 ): Promise<void> {
-  const url = `${PROTOCOL}://${submission.queue}.${submission.domainId}.${submission.restHost}/${submission.eventName}`;
+  const url = `${PROTOCOL}://${submission.queue}.${submission.domainId}.${FIXED_HOST}/${submission.eventName}`;
   await axios.post(url, submission.payload, { timeout: DEFAULT_TIMEOUT });
 }
