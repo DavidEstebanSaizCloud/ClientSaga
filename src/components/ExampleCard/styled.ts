@@ -8,7 +8,6 @@ export const Card = styled.article`
   border-radius: 1rem;
   border: 1px solid rgba(15, 23, 42, 0.08);
   background: #fff;
-  box-shadow: 0 10px 30px rgba(15, 23, 42, 0.08);
 `;
 
 export const Title = styled.h3`

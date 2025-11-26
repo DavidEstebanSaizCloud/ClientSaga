@@ -32,7 +32,6 @@ export const Logo = styled.img<{ $palette: LayoutPalette }>`
   object-fit: contain;
   border-radius: 12px;
   background: ${({ $palette }) => $palette.contentBg};
-  padding: 0.35rem;
   border: 2px solid ${({ $palette }) => $palette.accent};
 `;
 
@@ -50,5 +49,5 @@ export const Content = styled.main<{ $palette: LayoutPalette }>`
   overflow-y: auto;
   background: ${({ $palette }) => $palette.contentBg};
   color: ${({ $palette }) => $palette.textSecondary};
-  box-shadow: ${({ $palette }) => $palette.surfaceShadow};
+  box-shadow: none;
 `;

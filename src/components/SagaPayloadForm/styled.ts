@@ -2,11 +2,10 @@ import styled, { keyframes } from "styled-components";
 import Colors from "../../styles/Colors";
 
 export const Form = styled.form`
-  padding: 1.75rem;
-  border-radius: 16px;
+  padding: 1.5rem;
+  border-radius: 12px;
   background: #fff;
-  border: 1px solid rgba(15, 23, 42, 0.08);
-  box-shadow: 0 10px 35px rgba(15, 23, 42, 0.08);
+  border: 1px solid #d0d7de;
   display: grid;
   gap: 1.5rem;
 `;
@@ -37,21 +36,21 @@ export const InputGroup = styled.div`
 `;
 
 export const Input = styled.input`
-  border: 1px solid rgba(15, 23, 42, 0.2);
+  border: 1px solid #d0d7de;
   border-radius: 10px;
   padding: 0.65rem 0.85rem;
   font-size: 0.95rem;
-  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  transition: border-color 0.2s ease, background 0.2s ease;
 
   &:focus {
     outline: none;
     border-color: ${Colors.primary};
-    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
+    background: #f6f8fa;
   }
 
   &[data-invalid="true"] {
     border-color: ${Colors.danger};
-    box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.12);
+    background: rgba(207, 34, 46, 0.05);
   }
 
   &:disabled {
@@ -66,9 +65,10 @@ export const ErrorText = styled.span`
 `;
 
 export const Fieldset = styled.div`
-  border: 1px dashed rgba(15, 23, 42, 0.15);
-  border-radius: 12px;
+  border: 1px solid #d0d7de;
+  border-radius: 10px;
   padding: 1rem;
+  background: #f6f8fa;
   display: grid;
   gap: 1rem;
 `;
@@ -80,8 +80,8 @@ export const FieldsetTitle = styled.h3`
 `;
 
 export const ArrayContainer = styled.div`
-  border: 1px solid rgba(15, 23, 42, 0.1);
-  border-radius: 12px;
+  border: 1px solid #d0d7de;
+  border-radius: 10px;
   padding: 1rem;
   display: grid;
   gap: 1rem;
@@ -100,8 +100,8 @@ export const ArrayItems = styled.div`
 `;
 
 export const ArrayItem = styled.div`
-  border: 1px dashed rgba(15, 23, 42, 0.2);
-  border-radius: 12px;
+  border: 1px solid #d0d7de;
+  border-radius: 8px;
   padding: 1rem;
   display: grid;
   gap: 0.75rem;
@@ -116,29 +116,32 @@ export const ArrayItemHeader = styled.div`
 `;
 
 export const IconButton = styled.button`
-  border: none;
-  border-radius: 8px;
+  border: 1px solid #d0d7de;
+  border-radius: 6px;
   padding: 0.45rem 0.85rem;
-  background: ${Colors.primary};
-  color: #fff;
+  background: #f6f8fa;
+  color: ${Colors.secondary};
   font-weight: 600;
   cursor: pointer;
 
   &:hover:not(:disabled) {
-    background: ${Colors.primaryDark};
+    background: #eaeef2;
   }
 
   &:disabled {
-    background: ${Colors.gray300};
+    background: ${Colors.gray100};
+    color: ${Colors.gray500};
     cursor: not-allowed;
   }
 `;
 
 export const RemoveButton = styled(IconButton)`
-  background: ${Colors.danger};
+  color: ${Colors.danger};
+  border-color: ${Colors.danger};
+  background: #fff;
 
   &:hover:not(:disabled) {
-    background: #b91c1c;
+    background: rgba(207, 34, 46, 0.06);
   }
 `;
 
@@ -155,15 +158,15 @@ export const Actions = styled.div`
 
 export const SubmitButton = styled.button`
   min-width: 160px;
-  border: none;
-  border-radius: 999px;
-  padding: 0.85rem 1.5rem;
+  border: 1px solid ${Colors.primary};
+  border-radius: 10px;
+  padding: 0.8rem 1.25rem;
   font-size: 1rem;
   font-weight: 600;
   color: #fff;
   background: ${Colors.primary};
   cursor: pointer;
-  transition: background 0.2s ease;
+  transition: background 0.2s ease, border-color 0.2s ease;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -171,10 +174,12 @@ export const SubmitButton = styled.button`
 
   &:hover:not(:disabled) {
     background: ${Colors.primaryDark};
+    border-color: ${Colors.primaryDark};
   }
 
   &:disabled {
     background: ${Colors.gray300};
+    border-color: ${Colors.gray300};
     cursor: not-allowed;
   }
 `;
@@ -195,15 +200,15 @@ export const Spinner = styled.span`
 `;
 
 export const Banner = styled.div<{ intent: "success" | "error" }>`
-  border-radius: 12px;
+  border-radius: 8px;
   padding: 1rem;
   border: 1px solid
     ${({ intent }) =>
       intent === "success" ? Colors.success : Colors.danger};
   background: ${({ intent }) =>
     intent === "success"
-      ? "rgba(22, 163, 74, 0.12)"
-      : "rgba(220, 38, 38, 0.12)"};
+      ? "rgba(26, 127, 55, 0.08)"
+      : "rgba(207, 34, 46, 0.08)"};
   color: ${({ intent }) =>
     intent === "success" ? Colors.success : Colors.danger};
   display: grid;
@@ -221,8 +226,7 @@ export const SuccessState = styled.section`
   padding: 3rem 2rem;
   border-radius: 20px;
   background: #fff;
-  border: 1px solid rgba(15, 23, 42, 0.08);
-  box-shadow: 0 20px 45px rgba(15, 23, 42, 0.12);
+  border: 1px solid #d0d7de;
   display: grid;
   gap: 0.75rem;
   justify-items: center;

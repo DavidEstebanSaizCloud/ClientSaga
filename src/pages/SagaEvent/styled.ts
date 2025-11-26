@@ -40,12 +40,11 @@ export const Layout = styled.section`
 export const StateCard = styled.article`
   padding: 2rem;
   border-radius: 16px;
-  border: 1px solid rgba(15, 23, 42, 0.08);
+  border: 1px solid rgba(15, 23, 42, 0.12);
   background: #fff;
   text-align: center;
   font-size: 1rem;
   color: ${Colors.secondary};
-  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.08);
 `;
 
 export const Highlight = styled.span`

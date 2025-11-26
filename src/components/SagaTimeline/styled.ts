@@ -2,13 +2,12 @@ import styled from "styled-components";
 import Colors from "../../styles/Colors";
 
 export const Timeline = styled.section`
-  padding: 1.5rem;
-  border-radius: 16px;
+  padding: 1.25rem;
+  border-radius: 12px;
   background: #fff;
-  border: 1px solid rgba(15, 23, 42, 0.08);
+  border: 1px solid #d0d7de;
   display: grid;
-  gap: 1.5rem;
-  box-shadow: 0 8px 30px rgba(15, 23, 42, 0.08);
+  gap: 1.25rem;
 `;
 
 export const Header = styled.header`
@@ -38,19 +37,19 @@ export const List = styled.ol`
 
 export const EventItem = styled.li`
   position: relative;
-  padding-left: 2.25rem;
-  min-height: 2.75rem;
+  padding-left: 2rem;
+  min-height: 2.5rem;
   display: grid;
   gap: 0.25rem;
 
   &::before {
     content: "";
     position: absolute;
-    left: 0.85rem;
+    left: 0.7rem;
     top: 0.35rem;
     bottom: -0.35rem;
     width: 2px;
-    background: rgba(100, 116, 139, 0.3);
+    background: #d0d7de;
   }
 
   &:last-child::before {
@@ -60,10 +59,10 @@ export const EventItem = styled.li`
   &::after {
     content: "";
     position: absolute;
-    left: 0;
+    left: -0.15rem;
     top: 0.35rem;
-    width: 1.5rem;
-    height: 1.5rem;
+    width: 1.25rem;
+    height: 1.25rem;
     border-radius: 999px;
     border: 2px solid ${Colors.gray300};
     background: #fff;
