@@ -38,10 +38,11 @@ export function buildDefaultValue(schema: SagaSchema): unknown {
     return "";
   }
   if (isSchemaArray(schema)) {
-    if (!schema.length) {
+    const template = schema[0];
+    if (!template) {
       return [];
     }
-    return [buildDefaultValue(schema[0])];
+    return [buildDefaultValue(template)];
   }
   if (isSchemaObject(schema)) {
     return buildDefaultValuesFromObject(schema);
@@ -63,16 +64,24 @@ function searchFirstPrimitive(schema: SagaSchema, prefix: string): string | null
     if (!schema.length) {
       return null;
     }
+    const firstItem = schema[0];
+    if (!firstItem) {
+      return null;
+    }
     const nextPrefix = prefix ? `${prefix}.0` : "0";
-    return searchFirstPrimitive(schema[0], nextPrefix);
+    return searchFirstPrimitive(firstItem, nextPrefix);
   }
   if (isSchemaObject(schema)) {
     const [firstKey] = Object.keys(schema);
     if (!firstKey) {
       return null;
     }
+    const branch = schema[firstKey];
+    if (typeof branch === "undefined") {
+      return null;
+    }
     const nextPrefix = prefix ? `${prefix}.${firstKey}` : firstKey;
-    return searchFirstPrimitive(schema[firstKey], nextPrefix);
+    return searchFirstPrimitive(branch, nextPrefix);
   }
   return null;
 }
@@ -106,10 +115,11 @@ export function castValuesToSchema(
     if (!Array.isArray(values)) {
       return [];
     }
-    if (!schema.length) {
+    const template = schema[0];
+    if (!template) {
       return values;
     }
-    return values.map((item) => castValuesToSchema(schema[0], item));
+    return values.map((item) => castValuesToSchema(template, item));
   }
 
   if (isSchemaObject(schema)) {
@@ -118,6 +128,9 @@ export function castValuesToSchema(
     }
     return Object.entries(schema).reduce<Record<string, unknown>>(
       (acc, [key, branch]) => {
+        if (typeof branch === "undefined") {
+          return acc;
+        }
         acc[key] = castValuesToSchema(
           branch,
           (values as Record<string, unknown>)[key],
@@ -261,8 +274,14 @@ function resolveMappingRecord(
 
 function isMappingConst(
   value: SagaListenerMappingValue,
-): value is { const: unknown } {
-  return isPlainRecord(value) && "const" in value;
+): value is { const: string | number | boolean } {
+  return (
+    isPlainRecord(value) &&
+    "const" in value &&
+    (typeof value.const === "string" ||
+      typeof value.const === "number" ||
+      typeof value.const === "boolean")
+  );
 }
 
 function isMappingReference(

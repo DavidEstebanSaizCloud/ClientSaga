@@ -162,10 +162,13 @@ function PrimitiveField({
       ? {
           valueAsNumber: true,
           required: "Campo obligatorio",
-          validate: (value: number) =>
-            typeof value === "number" && !Number.isNaN(value)
+          validate: (value: unknown) => {
+            const numericValue =
+              typeof value === "number" ? value : Number(value);
+            return !Number.isNaN(numericValue)
               ? true
-              : "Introduce un número válido",
+              : "Introduce un número válido";
+          },
         }
       : {
           required: "Campo obligatorio",

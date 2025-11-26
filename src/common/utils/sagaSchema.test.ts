@@ -4,9 +4,10 @@ import {
   castValuesToSchema,
   getFirstPrimitivePath,
 } from "./sagaSchema";
+import type { SagaSchemaObject } from "../types/sagaEvent";
 
 describe("sagaSchema utilities", () => {
-  const schema = {
+  const schema: SagaSchemaObject = {
     orderId: "string",
     amount: "number",
     address: {
@@ -19,7 +20,7 @@ describe("sagaSchema utilities", () => {
         qty: "number",
       },
     ],
-  } as const;
+  };
 
   it("builds default values preserving the schema shape", () => {
     const defaults = buildDefaultValuesFromObject(schema);
@@ -28,8 +29,8 @@ describe("sagaSchema utilities", () => {
       amount: "",
       address: { city: "", zip: "" },
     });
-    expect(Array.isArray(defaults.lines)).toBe(true);
-    expect(defaults.lines).toHaveLength(1);
+    expect(Array.isArray(defaults["lines"])).toBe(true);
+    expect((defaults["lines"] as unknown[]).length).toBe(1);
   });
 
   it("casts values back to the schema types", () => {
@@ -45,7 +46,7 @@ describe("sagaSchema utilities", () => {
       amount: 89.5,
       lines: [{ qty: 2 }],
     });
-    expect(typeof (casted as Record<string, unknown>).amount).toBe("number");
+    expect(typeof (casted as Record<string, unknown>)["amount"]).toBe("number");
   });
 
   it("retrieves the first primitive path for focus management", () => {

@@ -212,14 +212,22 @@ async function resolveActivePublish(
       restHost,
       domain.listeners ?? [],
     )) ?? null;
+  const firstPublish = domain.publishes[0];
+  if (!firstPublish) {
+    throw new Error("No se pudo determinar el evento inicial.");
+  }
   const preferredEvent =
     listenerEvent ??
     domain.publishes.find((item) => item.start)?.event ??
-    domain.publishes[0].event;
+    firstPublish.event;
 
   const publish =
     domain.publishes.find((item) => item.event === preferredEvent) ??
-    domain.publishes[0];
+    firstPublish;
+
+  if (!publish) {
+    throw new Error("No se pudo determinar el evento activo.");
+  }
 
   return {
     publish,
