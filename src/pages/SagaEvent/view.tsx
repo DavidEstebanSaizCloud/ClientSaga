@@ -15,7 +15,6 @@ export default function SagaEventPage() {
     status,
     errorMessage,
     isLocked,
-    isRefreshing,
     isLoading,
     loadError,
   } = useSagaEvent();
@@ -67,7 +66,6 @@ export default function SagaEventPage() {
             isLocked={isLocked}
             status={status}
             errorMessage={errorMessage}
-            isRefreshing={isRefreshing}
           />
         </FormProvider>
       </S.Layout>

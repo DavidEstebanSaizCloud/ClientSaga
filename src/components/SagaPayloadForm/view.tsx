@@ -17,7 +17,7 @@ import * as S from "./styled";
 import { useSagaPayloadForm, type SagaPayloadFormProps } from "./useSagaPayloadForm";
 
 export default function SagaPayloadForm(props: SagaPayloadFormProps) {
-  const { banner, schema, onSubmit, eventName, isLocked, successState, isRefreshing } =
+  const { banner, schema, onSubmit, eventName, isLocked, successState } =
     useSagaPayloadForm(props);
   const { formState } = useFormContext<SagaFormValues>();
 

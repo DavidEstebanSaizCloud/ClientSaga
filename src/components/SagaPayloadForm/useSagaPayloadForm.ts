@@ -9,7 +9,6 @@ export interface SagaPayloadFormProps {
   isLocked: boolean;
   status: "idle" | "success" | "error";
   errorMessage: string;
-  isRefreshing?: boolean;
 }
 
 interface BannerState {

@@ -22,13 +22,9 @@ export function resolveDomainParts(
 ): DomainParts {
   const [first, ...rest] = host.split(".");
   const domainId =
-    first && first !== "localhost"
-      ? first
-      : (fallback && fallback.trim()) || "local";
+    first && first !== "localhost" ? first : (fallback && fallback.trim()) || "local";
   const tail = rest.join(".");
-  const restHost = tail
-    ? `${tail}${port ? `:${port}` : ""}`
-    : "tia.deployreal.com";
+  const restHost = tail ? `${tail}${port ? `:${port}` : ""}` : "tia.deployreal.com";
   const baseHost = `${domainId}.${restHost}`;
   return { domainId, restHost, baseHost };
 }
@@ -63,12 +59,12 @@ export async function fetchListenerEvent(
 ): Promise<{ event?: string; payload?: Record<string, unknown> } | null> {
   const url = `${PROTOCOL}://${domainId}.${FIXED_HOST}/${listener.id}`;
   try {
-    const response = await axios.get<{ event?: string; payload?: Record<string, unknown> }>(
-      url,
-      {
-        timeout: DEFAULT_TIMEOUT,
-      },
-    );
+    const response = await axios.get<{
+      event?: string;
+      payload?: Record<string, unknown>;
+    }>(url, {
+      timeout: DEFAULT_TIMEOUT,
+    });
     const eventName = response.data?.event;
     if (typeof eventName === "string" && eventName.length > 0) {
       return {
@@ -76,6 +72,7 @@ export async function fetchListenerEvent(
         payload: response.data?.payload,
       };
     }
+    console.log("HOLAS", response);
     if (response.data && "payload" in response.data) {
       return { payload: response.data.payload };
     }
@@ -108,9 +105,7 @@ export async function fetchFirstMatchingListenerEvent(
   return null;
 }
 
-export async function submitSagaEvent(
-  submission: SagaEventSubmission,
-): Promise<void> {
+export async function submitSagaEvent(submission: SagaEventSubmission): Promise<void> {
   const url = `${PROTOCOL}://${submission.domainId}.${FIXED_HOST}/${submission.queue}/${submission.eventName}`;
   await axios.post(url, submission.payload, { timeout: DEFAULT_TIMEOUT });
 }
