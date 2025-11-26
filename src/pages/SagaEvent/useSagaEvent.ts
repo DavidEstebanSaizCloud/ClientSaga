@@ -80,9 +80,12 @@ export function useSagaEvent(): UseSagaEventResult {
     if (!sagaQuery.data) {
       return undefined;
     }
+    const normalizedDomain = domainId.toLowerCase();
     return (
       sagaQuery.data.domains.find(
-        (item) => item.id === domainId || item.id.toLowerCase() === domainId.toLowerCase(),
+        (item) =>
+          item.name?.toLowerCase() === normalizedDomain ||
+          item.id.toLowerCase() === normalizedDomain,
       ) ?? sagaQuery.data.domains[0]
     );
   }, [domainId, sagaQuery.data]);
@@ -197,16 +200,13 @@ export function useSagaEvent(): UseSagaEventResult {
   };
 }
 
-async function resolveActivePublish(
-  domain: SagaDomain,
-): Promise<ActiveEventResult> {
+async function resolveActivePublish(domain: SagaDomain): Promise<ActiveEventResult> {
   if (!domain.publishes || !domain.publishes.length) {
     throw new Error("El dominio no tiene eventos configurados.");
   }
 
   const listenerEvent =
-    (await fetchFirstMatchingListenerEvent(domain.id, domain.listeners ?? [])) ??
-    null;
+    (await fetchFirstMatchingListenerEvent(domain.id, domain.listeners ?? [])) ?? null;
   const firstPublish = domain.publishes[0];
   if (!firstPublish) {
     throw new Error("No se pudo determinar el evento inicial.");
@@ -217,8 +217,7 @@ async function resolveActivePublish(
     firstPublish.event;
 
   const publish =
-    domain.publishes.find((item) => item.event === preferredEvent) ??
-    firstPublish;
+    domain.publishes.find((item) => item.event === preferredEvent) ?? firstPublish;
 
   if (!publish) {
     throw new Error("No se pudo determinar el evento activo.");

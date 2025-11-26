@@ -21,6 +21,7 @@ export interface SagaPublish {
 
 export interface SagaDomain {
   id: string;
+  name?: string;
   queue: string;
   publishes: SagaPublish[];
   listeners?: SagaListener[];
