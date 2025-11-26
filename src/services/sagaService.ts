@@ -65,17 +65,24 @@ export async function fetchListenerEvent(
     }>(url, {
       timeout: DEFAULT_TIMEOUT,
     });
-    const eventName = response.data?.event;
-    if (typeof eventName === "string" && eventName.length > 0) {
+    const data = response.data;
+    const eventName =
+      typeof data?.event === "string" && data.event.length > 0 ? data.event : undefined;
+
+    const payloadCandidate =
+      typeof data?.payload === "object" && data.payload !== null
+        ? (data.payload as Record<string, unknown>)
+        : typeof data === "object" && data !== null
+          ? (data as Record<string, unknown>)
+          : undefined;
+
+    if (eventName || payloadCandidate) {
       return {
         event: eventName,
-        payload: response.data?.payload,
+        payload: payloadCandidate,
       };
     }
-    console.log("HOLAS", response);
-    if (response.data && "payload" in response.data) {
-      return { payload: response.data.payload };
-    }
+
     return null;
   } catch (error) {
     // No interrumpimos el flujo si un listener falla; simplemente devolvemos null.
