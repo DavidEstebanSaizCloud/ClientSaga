@@ -99,6 +99,6 @@ export async function fetchFirstMatchingListenerEvent(
 export async function submitSagaEvent(
   submission: SagaEventSubmission,
 ): Promise<void> {
-  const url = `${PROTOCOL}://${submission.queue}.${submission.domainId}.${FIXED_HOST}/${submission.eventName}`;
+  const url = `${PROTOCOL}://${submission.domainId}.${FIXED_HOST}/${submission.queue}/${submission.eventName}`;
   await axios.post(url, submission.payload, { timeout: DEFAULT_TIMEOUT });
 }

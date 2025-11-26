@@ -148,7 +148,7 @@ http://{dominio}.tia.deployreal.com
 
 3. **Envío del formulario**
    - Al pulsar el botón **Enviar**, los datos introducidos deben enviarse en **exactamente la misma estructura** que el `payloadSchema` original.
-   - Se hará una llamada POST https://{queue}.{dominio}.tia.deployreal.com/{evento}.
+   - Se hará una llamada POST https://{dominio}.tia.deployreal.com/{queue}/{evento}.
    - Mientras el envío esté en curso:
      - Todos los campos y el botón de envío se bloquean.
      - Al botón "Enviar" se le añade después del texto pero dentro del botón un spinner animado
@@ -314,7 +314,7 @@ No hay llamada GET ya que no tiene listeners. Se busca el evento correspondiente
 }
 
 2. POST
-   POST hr-queue.hr.tia.deployreal.com/registro-empleado-hr
+   POST hr.tia.deployreal.com/hr-queue/registro-empleado-hr
    {
    "empleadoId": "string",
    "nombre": "string",
@@ -325,7 +325,7 @@ No hay llamada GET ya que no tiene listeners. Se busca el evento correspondiente
 Segundo dominio (Payroll)
 
 1. GET payroll-on-registro-hr.Payroll.tia.deployreal.com
-2. POST payroll-queue.Payroll.tia.deployreal.com/configuracion-pago-payroll
+2. POST payroll-queue.Payroll.tia.deployreal.com/payroll-queue/configuracion-pago-payroll
    {
    "empleadoId": "empleadoId",
    "nombre": "nombre",
